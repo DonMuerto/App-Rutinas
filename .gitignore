@@ -1,0 +1,32 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# tests
+/coverage
+/playwright-report
+/test-results
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# local environment files
+.env*
+!.env.example
+
+# tooling
+*.tsbuildinfo
+.eslintcache
+
+# debug
+npm-debug.log*
+pnpm-debug.log*
+
+# system files
+.DS_Store
+Thumbs.db
