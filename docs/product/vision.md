@@ -2,7 +2,7 @@
 
 ## Propuesta
 
-Ritmo combina un editor de documentos libre con actividades ejecutables. Cada rutina es una pagina tipo Notion en la que conviven notas, encabezados, listas, enlaces, checklists y bloques de Actividad. La estructura del documento permite planificar sin abandonar el contexto escrito.
+Ritmo combina un editor de documentos libre con actividades ejecutables. Cada rutina es una pagina tipo Notion en la que conviven notas, encabezados, listas, enlaces, checklists y bloques Activity. La misma experiencia React funciona en navegador, PC y movil sin duplicar el dominio ni el documento.
 
 La Actividad no es una entidad editada en otra pantalla. Es un bloque del documento con titulo inline, hora opcional, completado diario y temporizador opcional.
 
@@ -30,6 +30,17 @@ Una pagina Viaje a Valparaiso tiene fecha especifica. Sigue existiendo y puede e
 - Privacidad por defecto mediante RLS.
 - Coste cero para el MVP, sin trials con vencimiento.
 - Accesibilidad: teclado, foco, contraste y alternativas a color y sonido.
+- Un producto, tres contenedores: web, Tauri y Capacitor comparten UI y reglas.
+- Adaptacion, no forks: layout, input y lifecycle cambian mediante capacidades.
+- Datos online-first con proteccion local de borradores; no se promete edicion offline completa.
+
+## Plataformas
+
+- Web es el canal universal y de desarrollo rapido.
+- Tauri ofrece una app instalable para PC, con Windows como gate primario.
+- Capacitor ofrece una app movil, con Android como gate primario.
+- macOS, Linux e iOS comparten arquitectura, pero sus releases dependen de hardware, firma y cuentas externas.
+- BlockNote se ejecuta dentro del WebView nativo; no se reimplementa en React Native.
 
 ## Lenguaje visual
 

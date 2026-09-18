@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Construir una maquina pura y determinista para countdown e intervalos, independiente de React y de cualquier efecto.
+Construir una maquina pura y determinista reusable sin React, DOM ni plataforma.
 
 ## Responsabilidades
 
@@ -13,12 +13,13 @@ Construir una maquina pura y determinista para countdown e intervalos, independi
 - Exponer fase, restante, progreso, ciclo, set y transiciones.
 - Cancelar y volver a idle.
 - Permitir reloj inyectable en pruebas.
+- Serializar/validar el estado minimo de restauracion sin realizar I/O.
 
 ## No objetivos
 
 - No React, hooks, DOM, intervalos visuales, audio ni Supabase.
-- No singleton global; eso pertenece a Timer UI.
-- No completion, pausa, reanudacion, skip, reset ni persistencia.
+- No singleton global; pertenece al controller React.
+- No completion, pausa, reanudacion, skip, reset ni acceso directo a storage.
 
 ## Invariantes
 
@@ -43,7 +44,8 @@ Construir una maquina pura y determinista para countdown e intervalos, independi
 - Tick posterior al final total.
 - Configuraciones negativas, decimales, infinitas y fuera de rango.
 - Cancelacion desde cada tipo de fase.
+- Restauracion en mitad de fase, tras varias fases y despues de done.
 
 ## Handoff
 
-Entregar API publica de plan/estado/transicion, validacion y pruebas con reloj falso. Incluir ejemplo documental de consumo, sin construir UI.
+Entregar API de plan/estado/transicion/serializacion y pruebas con reloj falso. Debe compilar en un paquete puro.

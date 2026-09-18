@@ -2,48 +2,44 @@
 
 ## Identidad
 
-- Sesion:
-- Rol:
-- Alcance terminado:
-- Owner receptor:
+- Sesion/rol:
 - Ola/gate:
+- Owner receptor:
+- Base commit y estado de worktree:
 
 ## Cambios
 
-- Archivos creados:
-- Archivos modificados:
-- Archivos compartidos tocados con autorizacion:
-- Dependencias solicitadas o agregadas por S0:
+- Archivos creados/modificados:
+- Ownership y transferencias:
+- Dependencias solicitadas a M0:
+- Cambios concurrentes preservados:
 
 ## Contratos
 
-- Contratos consumidos:
+- Documentos consumidos:
 - API publica entregada:
-- Cambios de contrato propuestos:
-- Supuestos adoptados:
+- Cambios propuestos:
+- Supuestos:
 
 ## Verificacion
 
-- Comandos ejecutados:
-- Resultado de tipos:
-- Resultado de lint:
-- Resultado de pruebas del modulo:
-- Resultado de build:
-- Evidencia adicional RLS/E2E/visual:
+- Tipos, lint, unitarias y build:
+- RLS/E2E si aplica:
+- Web/Tauri/Capacitor ejecutados:
+- Plataformas no verificadas y motivo:
+- Evidencia visual/dispositivo:
 
 ## Riesgos
 
-- Casos limite cubiertos:
-- Limitaciones conocidas:
+- Casos limite:
+- Limitaciones y bloqueos:
 - Trabajo diferido:
-- Bloqueos para consumidores:
 
-## Confirmaciones obligatorias
+## Confirmaciones
 
-- No se uso `any` injustificado.
-- No se introdujo `SUPABASE_SERVICE_ROLE_KEY`.
-- No se debilito RLS.
-- No se agregaron paquetes `@blocknote/xl-*`.
-- No se implemento PWA, Service Worker, Web Notifications o Wake Lock.
-- No se creo una pantalla de edicion de Activity.
-- No se modificaron archivos fuera del ownership sin coordinacion.
+- Sin `any` injustificado ni secretos/service role.
+- Sin RLS debilitada, XL, PWA, Service Worker, notificaciones, background runner o Wake Lock.
+- Sin Activity separada del editor.
+- Sin imports Tauri/Capacitor fuera de adaptadores.
+- Sin Next/SSR nuevo en arquitectura objetivo.
+- Sin modificaciones fuera de ownership no coordinadas.

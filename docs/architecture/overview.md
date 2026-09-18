@@ -1,65 +1,65 @@
 # Arquitectura
 
-## Fronteras
+## Capas
 
-| Modulo | Responsabilidad | No debe hacer |
+| Capa | Responsabilidad | Dependencias permitidas |
 |---|---|---|
-| Shell | Layout, navegacion, tema y montaje del timer global | Interpretar JSON BlockNote |
-| Auth/datos | Sesion, Supabase, RLS y repositorios | Renderizar features del editor |
-| Rutinas/editor | Metadatos, BlockNote, autosave y esquema custom | Consultar todas las rutinas para Hoy |
-| Actividad | Render inline, validacion y comandos | Implementar motor, SQL o vista Hoy |
-| Completados | Estado diario idempotente | Alterar contenido editorial |
-| Proyector | Extraer actividades y subtareas de documentos | Escribir documentos o completados |
-| Hoy | Agregar, ordenar, completar, iniciar y navegar | Editar documentos |
-| Timer engine | Plan y transiciones puras por timestamps | Conocer React, DOM, audio o Supabase |
-| Timer UI | Singleton global, overlay, audio y accesibilidad | Completar actividades |
+| `apps/client` | Bootstrap React, router, seleccion de adaptador y providers | Features, data, ports y dynamic imports de `platform-*` solo en bootstrap |
+| `apps/desktop` | Configuracion y comandos minimos Tauri | Adaptador Tauri |
+| `apps/mobile` | Configuracion, Android e iOS Capacitor | Adaptador Capacitor |
+| `packages/core` | Contratos Zod, fechas, errores y utilidades puras | Ninguna plataforma |
+| `packages/document-model` | Validacion/proyeccion JSON BlockNote sin React | Core |
+| `packages/editor` | BlockNote, Activity, autosave y draft journal | Core, document-model, data ports, platform ports |
+| `packages/data-auth` | Supabase JS, repositorios, auth y query keys | Core, platform storage |
+| `packages/timer` | Engine, persistencia de snapshot y UI enfoque | Core, platform lifecycle/audio/storage |
+| `packages/features` | Shell, sidebar, Hoy y completions | Core, data, editor/timer APIs |
+| `packages/ui` | Primitives DOM, tokens y layout sin dominio | Core y React |
+| `packages/platform` | Interfaces neutrales de capacidades | Core |
+| `packages/platform-*` | Implementaciones web, Tauri y Capacitor | SDK de su plataforma y ports |
 
-## Dependencias permitidas
+Las features no importan Tauri, Capacitor, Rust, Java/Kotlin, Swift ni Supabase directamente. El modelo documental no importa React ni BlockNote.
 
-```text
-Shell -> Auth, Sidebar, Timer UI
-Sidebar -> Repositorio de rutinas
-Editor -> Repositorio de rutinas, Esquema documental, Actividad, Completados, Timer UI
-Hoy -> Repositorio de rutinas, Proyector, Completados, Timer UI
-Proyector -> Esquema documental
-Actividad -> Contrato de timer, Completados, Timer UI
-Timer UI -> Timer engine
-Repositorios -> Supabase y sesion
-```
+## Un cliente, tres contenedores
 
-Las dependencias inversas o accesos directos a tablas desde componentes quedan prohibidos.
+Vite genera una sola vez un `dist/` con base relativa y rutas hash. Los mismos bytes se sirven por HTTPS y se copian a Tauri/Capacitor. El bootstrap detecta el runtime mediante marcadores oficiales y hace dynamic import del adaptador; las features nunca detectan plataforma.
+
+## Providers React
+
+Orden conceptual: PlatformProvider, QueryClient, AuthProvider, ThemeProvider, TimerProvider, CompletionProvider y Router UI. Los providers se dividen por frecuencia de cambio para evitar rerenderizar toda la aplicacion por cada tick del timer.
+
+El editor se importa lazy al entrar a una rutina. Auth, landing, shell y Hoy no deben cargar BlockNote ni Mantine.
 
 ## Fuentes de verdad
 
 | Dato | Fuente |
 |---|---|
 | Titulo de rutina | `routines.name` |
-| Documento y estructura | `routines.content` |
-| Titulo de actividad | Contenido inline del bloque Activity |
-| Configuracion de timer | Props del bloque Activity |
-| Completion de actividad | Estado diario relacional |
-| Completion de subtarea Activity | Estado diario relacional |
-| Checklist normal | Propiedad persistida del bloque |
-| Fecha de negocio | Navegador |
-| Timer activo | Store global en memoria de la pestana |
+| Documento remoto | `routines.content` + `revision` |
+| Borrador no sincronizado | Draft journal local por usuario/rutina |
+| Activity | Contenido y props del bloque |
+| Completion | `block_completions` |
+| Fecha | Zona local del dispositivo |
+| Timer activo | Snapshot local del contexto + engine puro |
+| Sesion | Supabase Auth con storage inyectado |
 
-## Flujos criticos
+## Flujos
+
+### Inicio
+
+La app inicializa plataforma y almacenamiento, restaura auth, crea caches por usuario y decide ruta. El HTML/bundle nunca contiene datos privados precargados. RLS sigue siendo la autorizacion real.
 
 ### Guardado
 
-Renombrar solo actualiza `name`; guardar el editor solo actualiza `content`; cambiar recurrencia solo actualiza sus campos. Nunca se envia una fila completa desde estado posiblemente desactualizado. El autosave usa debounce, conserva cambios locales ante error y muestra su estado.
+Cada cambio incrementa una generacion y escribe draft local. Solo hay un save en vuelo. Exito elimina el draft solo si sigue siendo la generacion enviada; si hay cambios nuevos actualiza atomicamente su revision base. Conflicto conserva ambas versiones y ofrece recargar remoto o guardar el draft como nueva rutina.
 
-### Hoy
+### Lifecycle
 
-El navegador produce una fecha local. El repositorio recupera rutinas elegibles y completados de esa fecha. El proyector recorre los documentos y Hoy ordena la salida. Hoy nunca guarda `content`.
+En resume se restaura/refresca auth, recalcula fecha, reconcilia timer por timestamps, revisa drafts y revalida queries. Android back primero navega; solo sale desde raiz y sin bloqueo de guardado.
 
-### Timer
+### Logout/cambio de usuario
 
-Activity o Hoy entregan un snapshot validado al runtime global. El motor calcula fases mediante deadlines. La UI representa transiciones y audio. La sesion persiste durante navegacion cliente, pero no tras recarga.
+`SessionExitCoordinator`, propiedad de features, orquesta logout: consulta DraftController, permite sincronizar/guardar copia/descartar/cancelar, limpia timer/completions/QueryClient y al final llama AuthService.logout. AuthService no conoce editor. Expiracion involuntaria usa la misma frontera de limpieza visible, pero conserva journals bloqueados por user ID hasta reautenticar la cuenta.
 
-## Decisiones de implementacion diferidas
+## Seguridad
 
-- Versiones exactas se fijan al crear el scaffold y se registran en el handoff de plataforma.
-- La tecnica concreta para superponer completados diarios sobre checklists BlockNote requiere un spike antes de integrar el editor.
-- La API exacta para enfocar un bloque por ID requiere un spike BlockNote.
-- La colaboracion concurrente y versionado de documentos quedan fuera del MVP.
+URL y anon key son publicas. Tokens persistentes pasan por SecureStoragePort. Tauri capabilities, CSP y permisos Capacitor usan minimo privilegio. No se habilitan comandos remotos, filesystem general, shell, notificaciones o background sin ADR.

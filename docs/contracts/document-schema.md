@@ -2,9 +2,11 @@
 
 ## Documento raiz
 
-`routines.content` contiene una coleccion ordenada de bloques raiz. Cada bloque conserva ID, tipo, contenido, props e hijos. El titulo de la rutina no forma parte de este documento.
+`routines.content` contiene un envelope `{ schemaVersion, blocks }`. La version inicial es 1 y `blocks` contiene la coleccion BlockNote ordenada. Cada bloque conserva ID, tipo, contenido, props e hijos. El titulo de rutina queda fuera.
 
-El formato se considera versionado aunque BlockNote serialice detalles internos. Los adaptadores del editor y del proyector deben compartir validadores y fixtures; no pueden interpretar el JSON por separado.
+Una migracion envuelve arrays historicos como version 1; despues no se mantiene doble formato runtime. Futuras versiones usan migradores puros, secuenciales e idempotentes antes de montar BlockNote. Editor y proyector comparten validadores/migradores.
+
+El contrato es independiente de plataforma. WebView2, Android WebView y WKWebView deben producir el mismo JSON para la misma edicion. Ningun bloque almacena rutas locales, handles nativos ni objetos de SDK.
 
 ## Activity version 1
 
@@ -82,4 +84,4 @@ El editor puede conservar marcas y links inline soportados por BlockNote. Hoy y 
 
 ## Fixtures contractuales
 
-Calidad debe mantener documentos representativos para: vacio, Activity countdown, intervalos con subtareas profundas, checklists normales, varias Activities, datos invalidos, tipo desconocido y copia con IDs distintos.
+Calidad debe mantener documentos representativos para: vacio, Activity countdown, intervalos con subtareas profundas, checklists normales, varias Activities, datos invalidos, tipo desconocido y copia con IDs distintos. Los fixtures se ejecutan contra el modelo puro y en smoke real de BlockNote para navegador y WebViews disponibles.

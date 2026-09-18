@@ -2,70 +2,57 @@
 
 ## Principio
 
-Las pruebas no son una fase opcional. Cada owner prueba su logica interna; S6 mantiene fixtures contractuales, integracion transversal, RLS y E2E. Se usan herramientas locales y gratuitas.
+Cada owner prueba su logica. M1 mantiene `supabase/tests`; M5 los ejecuta en CI y mantiene fixtures transversales, integracion, E2E y smoke nativo. No se aprueba una plataforma usando solo jsdom.
 
 ## Capas
 
-| Capa | Cobertura principal |
+| Capa | Cobertura |
 |---|---|
-| Tipos y lint | Fronteras TypeScript strict, imports y reglas estaticas |
-| Unitarias | Fecha local, validadores, proyector, orden y timer engine |
-| Componentes | Activity, sidebar, Today, overlay, errores y accesibilidad |
-| Datos/RLS | Constraints, grants y aislamiento por operacion |
-| E2E | Recorridos completos desktop y movil |
-| Build | SSR, boundaries cliente y produccion |
+| Tipos/lint | TypeScript strict, boundaries e imports prohibidos |
+| Unitarias | Fecha, timer, validadores, proyeccion, repositories y drafts |
+| Componentes | Activity, editor, Hoy, sidebar, auth y overlay |
+| RLS | Grants, policies y aislamiento A/B/anon |
+| E2E web | Flujo completo a 360, 768 y 1440 px |
+| Native smoke | Tauri Windows y Capacitor Android |
+| Builds | Vite, Tauri y Capacitor; targets Apple solo en macOS |
 
-## Timer
+## Contratos criticos
 
-Usar reloj inyectado, nunca esperas reales. Cubrir countdown, todas las fases, ceros, limites, ciclos/sets, deadline exacto, salto de varias fases, final total y cancelacion. Verificar que el motor no depende de React/DOM y que ninguna transicion invoca completion.
+Timer usa reloj falso y cubre restauracion tras varias fases. Document-model usa fixtures validos, invalidos y desconocidos sin importar BlockNote. Fecha se prueba en UTC-/UTC+, medianoche, resume y cambio de zona.
 
-## Documento y proyeccion
-
-Mantener fixtures para documento vacio, Activity countdown, intervalos, subtareas profundas, checklists normales, varias Activities, bloques invalidos/desconocidos y duplicados con IDs nuevos.
-
-Verificar round-trip sin perdida, IDs estables, titulo separado, deteccion por ancestro mas cercano, estado diario no persistido, tolerancia parcial, orden estable y foco por ID.
-
-## Fecha local
-
-Controlar reloj y zona. Cubrir UTC- y UTC+, cercania a medianoche, cambio de dia con vista abierta, recuperacion de visibilidad, fecha especifica, cambio de zona y timer que cruza medianoche. Las pruebas no dependen de la fecha del equipo.
+Draft journal cubre escritura atomica, recuperacion tras cierre, aislamiento por usuario, limpieza tras save, red fallida, revision remota distinta y logout. Ningun test acepta sobrescritura silenciosa.
 
 ## RLS
 
-Con Supabase local y sesiones reales:
+Supabase local usa usuario A, B y anon para SELECT/INSERT/UPDATE/DELETE, completions, reorder y save revisionado. Service role no participa en las afirmaciones de aislamiento. El gate requiere ejecucion real, no solo inspeccion SQL.
 
-- Usuario A puede operar sus rutinas y completions.
-- Usuario B no puede seleccionar, insertar, actualizar ni borrar datos de A.
-- B no puede referenciar una rutina de A al insertar completion.
-- Anon no accede a tablas privadas.
-- Grants permiten al rol authenticated usar Data API bajo RLS.
-- Constraints rechazan recurrencia y completion invalidas.
-- Reintentos no crean duplicados.
+## E2E web
 
-No usar service role en los casos que afirman aislamiento.
+1. Registro/login y restauracion.
+2. Crear rutina, editar bloques y Activity.
+3. Configurar intervalos y subtareas.
+4. Guardar, recargar y verificar IDs/revision.
+5. Hoy, completion y navegacion al origen.
+6. Timer, suspension simulada y restore.
+7. Draft pendiente, red fallida y conflicto.
+8. Reorder, tema, responsive y logout sin fuga de estado.
 
-## E2E principal
+## Matriz de plataforma
 
-1. Registrarse o iniciar sesion.
-2. Crear y renombrar una rutina diaria.
-3. Escribir bloques nativos e insertar Activity con `/`.
-4. Configurar intervalos y anidar subtareas.
-5. Guardar, recargar y comprobar IDs/estructura.
-6. Crear rutina de fecha especifica.
-7. Abrir Hoy y verificar seleccion/orden local.
-8. Completar Activity y subtarea; comprobar sincronizacion con editor.
-9. Ejecutar timer, cambiar de pestana y volver sin deriva.
-10. Confirmar señal visual/sonora y completion manual.
-11. Reordenar sidebar con puntero y alternativa accesible.
-12. Cerrar sesion y perder acceso privado.
+| Target | Evidencia minima |
+|---|---|
+| Web | Build estatico y Playwright Chromium desktop/mobile |
+| Tauri Windows | Build/check, arranque, auth, editor, close lifecycle y timer restore |
+| Capacitor Android | Sync/build, emulador/dispositivo, teclado, back, resume, secure storage y editor |
+| Linux/macOS | Build cuando exista runner compatible |
+| iOS | Sync/build/smoke solo en macOS con Xcode |
 
-Tambien verificar que navegar internamente espera el autosave y que cerrar/recargar con cambios pendientes muestra advertencia. Confirmar el comportamiento de recuperacion read-only ante un tipo de bloque desconocido.
+BlockNote se prueba en WebView2 y Android WebView. WKWebView pasa a gate cuando exista entorno iOS. Cubrir IME, touch, clipboard, selection, teclado, scroll, dialogs, safe areas y documentos grandes.
 
-Ejecutar al menos en Chromium a 360 px y 1440 px; incluir 768 px en revision responsive. Usar roles y nombres accesibles como selectores, no clases Tailwind.
+## React y rendimiento
 
-## SSR y cliente
-
-Verificar que contenido privado no aparece antes de redireccion, BlockNote y APIs navegador no ejecutan en SSR, no hay errores de hidratacion, el tema inicial no parpadea incorrectamente y datos precargados no generan consultas duplicadas evitables.
+Verificar que editor/Mantine estan en chunk lazy, auth inicializa antes de vistas privadas, logout limpia caches/stores, listeners no se duplican y queries independientes no forman waterfalls. Features no deben importar SDK nativo.
 
 ## Gates
 
-Una entrega no avanza si falla tipos, lint, build, unitarias criticas, RLS, E2E principal, responsive o accesibilidad minima. No se exige porcentaje arbitrario; timer, fecha, proyeccion, autosave y RLS deben cubrir todas sus ramas de riesgo.
+Tipos, lint, unitarias, RLS, E2E web, build Vite, Tauri Windows y Capacitor Android son obligatorios. Targets condicionados se registran como no verificados, no como aprobados. Timer, lifecycle, drafts, autosave, proyeccion y seguridad requieren cobertura de riesgo.

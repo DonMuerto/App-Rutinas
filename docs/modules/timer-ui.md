@@ -2,11 +2,11 @@
 
 ## Objetivo
 
-Mantener una sola sesion temporal por pestana y representarla en un overlay modal que ocupa el viewport, tanto si se inicia desde el editor como desde Hoy. No usa Fullscreen API ni solicita permiso de pantalla completa.
+Mantener una sesion por contexto de ejecucion y representarla en overlay React desde editor o Hoy. No usa Fullscreen API.
 
 ## Responsabilidades
 
-- Montar el store por encima de las rutas privadas para sobrevivir navegacion cliente.
+- Montar controller/store por encima de las rutas privadas.
 - Iniciar desde un snapshot inmutable.
 - Bloquear atomicamente un segundo Start.
 - Abrir el overlay de enfoque al iniciar y permitir volver al timer existente.
@@ -14,10 +14,11 @@ Mantener una sola sesion temporal por pestana y representarla en un overlay moda
 - Mostrar titulo, rutina, fase, restante, ciclo, set y anillo.
 - Emitir señal visual y audio en transiciones.
 - Cancelar una sesion running y descartar una sesion done.
+- Persistir snapshot con TimerStoragePort y reconciliar en resume/reinicio.
 
 ## No objetivos
 
-- No persistir al recargar ni coordinar pestanas.
+- No coordinar contextos o dispositivos.
 - No pausar, reanudar, saltar o reiniciar.
 - No editar configuracion en modo enfoque.
 - No completar Activity.
@@ -27,9 +28,9 @@ Mantener una sola sesion temporal por pestana y representarla en un overlay moda
 
 Start prepara audio como consecuencia del gesto del usuario, crea la sesion y abre el overlay. Si existe una sesion running o done, se rechaza sin reemplazarla.
 
-Al volver de una suspension, la UI adopta inmediatamente la fase calculada. Si se omitieron varias transiciones, muestra el estado correcto y reproduce como maximo un sonido. Un fallo de audio nunca detiene la sesion.
+En background no intenta ejecutar ticks. Al volver adopta la fase calculada y reproduce como maximo un sonido. Un fallo de AudioPort nunca detiene la sesion.
 
-Cancel cierra y libera sin completion. Al llegar a done, el singleton sigue ocupado hasta Dismiss. Recargar pierde la sesion y esta limitacion debe ser aceptada.
+Cancel cierra, libera y elimina snapshot sin completion. Done ocupa hasta Dismiss. Recargar/reiniciar restaura un snapshot valido del mismo usuario.
 
 ## Accesibilidad
 
@@ -50,4 +51,4 @@ Trabajo usa ambar y descansos salvia, siempre junto a etiquetas. Los numeros usa
 
 ## Handoff
 
-Entregar provider/store, overlay, TimerRing, adaptador de audio, integracion con motor y pruebas de singleton, foco, navegacion y suspension simulada.
+Entregar provider/controller, overlay, TimerRing e integraciones LifecyclePort, AudioPort y TimerStoragePort. No importar Tauri/Capacitor.

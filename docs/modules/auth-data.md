@@ -2,39 +2,41 @@
 
 ## Objetivo
 
-Proveer sesion autenticada, clientes Supabase y repositorios tipados bajo RLS. Esta es la unica frontera que conoce tablas, PostgREST y cookies de Supabase.
+Proveer sesion autenticada y repositorios Supabase bajo RLS para web, Tauri y Capacitor. Es la unica frontera que conoce tablas, PostgREST y Supabase JS.
 
 ## Responsabilidades
 
 - Registro sin confirmacion de email, login, logout, restauracion y expiracion de sesion.
-- Proteccion del area privada y redirecciones coherentes.
-- Cliente servidor basado en cookies y cliente navegador con anon key.
+- Inicializacion de sesion antes de mostrar rutas privadas y guard React coherente.
+- Un cliente Supabase por contexto configurado con SecureStoragePort.
 - Migraciones, constraints, indices, triggers, grants y RLS descritos en [schema-rls.md](../database/schema-rls.md).
 - Repositorios definidos en [repositories.md](../contracts/repositories.md).
 - Tipos generados de base como detalle interno.
 - Errores de dominio que no filtren detalles de recursos ajenos.
-- Claves e invalidaciones de TanStack Query acordadas con consumidores.
+- Query keys segmentadas por usuario, refresh en resume y limpieza total al cambiar usuario.
 
 ## No objetivos
 
 - No renderizar editor, sidebar, Today ni timer.
 - No usar service role.
-- No crear API routes como capa redundante cuando sesion+RLS resuelvan el caso.
+- No crear servidor propio, middleware Next ni Server Actions.
 - No implementar OAuth, organizaciones, archivos o Realtime.
 - No decidir la fecha actual en servidor.
 
 ## Flujo de sesion
 
-El servidor valida la sesion inicial antes de entregar contenido privado. La renovacion de cookies en middleware no sustituye esa validacion. Los componentes cliente reciben solo los datos serializables minimos y crean su cliente de navegador dentro de la frontera cliente.
+La SPA muestra un estado de arranque mientras restaura storage y valida el usuario con Supabase. El guard controla experiencia, pero RLS es la autorizacion real. El bundle nunca contiene datos privados precargados.
 
-Estados requeridos: cargando, credenciales invalidas, sesion expirada, error de red y logout completado. Para evitar depender de SMTP, la confirmacion de email esta deshabilitada y un registro valido crea sesion en el MVP. Recuperacion de contrasena queda fuera de alcance; no se muestra un flujo incompleto.
+AuthService expone logout de bajo nivel y eventos de sesion; no inspecciona drafts, timer o UI. `SessionExitCoordinator` de M4 es el unico punto usado por acciones de logout. La restauracion lee una clave pre-auth unica y obtiene el user ID desde la sesion validada.
+
+Estados requeridos: inicializando, anonimo, autenticado, refrescando, sesion expirada, credenciales invalidas y red. Confirmacion y recuperacion de contrasena siguen fuera del MVP. Desktop/mobile persisten refresh material mediante almacenamiento seguro auditado, nunca Preferences/Tauri Store sin cifrado.
 
 ## Operaciones de datos
 
 - Sidebar lista metadatos sin descargar documentos.
 - Editor obtiene una rutina completa por ID.
 - Hoy recibe documentos solo de rutinas elegibles para una fecha explicita.
-- Las mutaciones de nombre, recurrencia y contenido son parciales y separadas.
+- Nombre/recurrencia son mutaciones parciales; content usa revision esperada.
 - Las completions usan upsert/delete idempotentes.
 - Reordenar normaliza posiciones del usuario como una operacion coherente.
 
@@ -44,4 +46,4 @@ Las pruebas RLS deben demostrar aislamiento con usuarios A y B y rol anonimo par
 
 ## Handoff
 
-Entregar migraciones, clientes, auth, interfaces de repositorio, politica de errores, claves de cache y evidencia RLS. Enumerar variables requeridas. Confirmar por busqueda que service role no existe.
+Entregar migracion incremental, cliente SPA, AuthService, repositorios, query keys y evidencia RLS. Variables objetivo: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`. Confirmar ausencia de service role, Next y `@supabase/ssr`.

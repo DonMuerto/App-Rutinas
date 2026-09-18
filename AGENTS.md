@@ -1,51 +1,62 @@
 # Ritmo: instrucciones para agentes
 
-Este archivo es la entrada obligatoria para cualquier agente que trabaje en el repositorio. Antes de modificar archivos, lee [docs/README.md](docs/README.md), el documento del modulo asignado y los contratos que consuma.
+Este archivo es la entrada obligatoria. Antes de modificar archivos, lee [docs/README.md](docs/README.md), el documento del modulo asignado, sus contratos y el plan de ejecucion vigente.
 
 ## Producto
 
-Ritmo es un editor de documentos tipo Notion al que se agrega un bloque custom de Actividad con hora, completado diario y temporizador. Cada rutina es una pagina editable. El editor es el producto principal; no construyas una aplicacion de tareas con formularios separados.
+Ritmo es un editor de documentos tipo Notion con un bloque Activity que agrega hora, completion diaria y temporizador. Una unica aplicacion React se ejecuta en navegador, escritorio con Tauri y movil con Capacitor. El editor es el producto principal; no construyas una aplicacion de tareas con formularios separados.
+
+## Arquitectura obligatoria
+
+- React 19 + Vite como cliente SPA compartido.
+- Tauri 2 empaqueta el mismo bundle para escritorio.
+- Capacitor empaqueta el mismo bundle para Android/iOS.
+- BlockNote base es el unico editor. React Native/Expo queda fuera porque BlockNote requiere DOM.
+- Tauri y Capacitor son shells finos: la logica de producto no se bifurca por plataforma.
+- Toda API de plataforma entra por puertos de lifecycle, storage, audio, navegacion y enlaces externos.
+- Supabase JS y TanStack Query funcionan en cliente; RLS es la frontera real de seguridad.
 
 ## Reglas innegociables
 
-- La Actividad se crea y edita dentro del documento BlockNote. Nunca crees una pantalla o ruta para editarla.
-- Usa solamente paquetes base de BlockNote. No uses `@blocknote/xl-*` sin aprobacion explicita por su licencia GPL-3.0.
-- No agregues servicios que exijan tarjeta de credito o una prueba con vencimiento.
+- Activity se crea y edita dentro del documento BlockNote. Nunca crees una pantalla o ruta para editarla.
+- Usa solamente paquetes base de BlockNote. No uses `@blocknote/xl-*` sin aprobacion explicita.
+- No agregues servicios que exijan tarjeta o una prueba con vencimiento.
 - Mantener RLS habilitada y probada en todas las tablas privadas.
-- El MVP no usa `SUPABASE_SERVICE_ROLE_KEY`.
-- No implementes PWA, Service Worker, Web Notifications, Wake Lock ni Capacitor en el MVP.
-- TypeScript debe permanecer en modo `strict`; evita `any`.
-- Server Components por defecto. Usa componentes cliente solo para interactividad o APIs del navegador.
-- El sidebar es una lista plana reordenable, no un arbol.
-- `routines.name` es la unica fuente del titulo de una rutina.
-- La vista Hoy no edita documentos: solo completa, inicia temporizadores y navega al origen.
-- Solo puede existir un temporizador activo por pestana. Terminarlo no completa la actividad.
-- La fecha operativa se calcula en la zona local del navegador.
-- No modifiques contratos compartidos o archivos fuera del ownership de tu sesion sin coordinacion.
+- Nunca uses `SUPABASE_SERVICE_ROLE_KEY` en web, binarios, CI o runtime.
+- Capacitor esta autorizado solo como contenedor. No implementes PWA, Service Worker, Web Notifications, notificaciones nativas, background runner ni Wake Lock en el MVP.
+- TypeScript permanece en `strict`; evita `any`.
+- No introduzcas dependencias de Next.js, Server Components, Server Actions ni `@supabase/ssr` en la arquitectura objetivo.
+- Si una guia React mezcla recomendaciones Next.js, aplica solo las reglas neutrales de React/Vite e ignora APIs Next.
+- El sidebar es una lista plana reordenable.
+- `routines.name` es la unica fuente del titulo de rutina.
+- Hoy no edita documentos: completa, inicia/abre timer y navega al origen.
+- Existe un timer por contexto de ejecucion. Terminarlo no completa Activity.
+- La fecha operativa usa la zona local del dispositivo.
+- No llames APIs Tauri/Capacitor directamente desde features o dominio.
+- No modifiques contratos o archivos fuera de ownership sin coordinacion.
+- Cada sesion mantiene su handoff en `docs/agents/handoffs/` con la plantilla oficial.
 
 ## Orden de lectura
 
-1. [Indice documental](docs/README.md).
-2. [Vision del producto](docs/product/vision.md) y [alcance MVP](docs/product/mvp-scope.md).
-3. [Arquitectura](docs/architecture/overview.md) y [decisiones cerradas](docs/architecture/decisions/0001-mvp-decisions.md).
-4. Los contratos y documentos de modulo indicados por el prompt de tu rol.
-5. [Plan multiagente](docs/agents/execution-plan.md) y [plantilla de handoff](docs/agents/handoff-template.md).
-6. [Criterios de aceptacion](docs/quality/acceptance.md) y [estrategia de pruebas](docs/quality/testing.md).
+1. [Indice](docs/README.md).
+2. [Vision](docs/product/vision.md) y [MVP](docs/product/mvp-scope.md).
+3. [Arquitectura](docs/architecture/overview.md), [React multiplataforma](docs/architecture/react-multiplatform.md) y [ADR 0002](docs/architecture/decisions/0002-react-vite-tauri-capacitor.md).
+4. Contratos y documentos del modulo asignado.
+5. [Plan multiagente](docs/agents/execution-plan.md) y [handoff](docs/agents/handoff-template.md).
+6. [Aceptacion](docs/quality/acceptance.md) y [pruebas](docs/quality/testing.md).
 
 ## Autoridad documental
 
-En caso de contradiccion, prevalece este orden:
-
 1. `AGENTS.md`.
-2. ADRs en `docs/architecture/decisions/`.
+2. ADRs aceptados, prevaleciendo el de numero mayor cuando enmiende otro.
 3. Contratos en `docs/contracts/` y `docs/database/`.
 4. Especificaciones en `docs/modules/`.
-5. Criterios de aceptacion en `docs/quality/`.
-6. Documentos de producto y operacion.
-7. El plan de agentes regula ejecucion y ownership, pero no cambia comportamiento de producto.
+5. Criterios en `docs/quality/`.
+6. Producto y operacion.
+7. El plan de agentes regula ownership, no comportamiento.
 
-No resuelvas contradicciones inventando comportamiento. Registra el bloqueo y solicita una decision al coordinador.
+No inventes una solucion ante contradicciones. Registra el bloqueo y pide decision al coordinador.
 
 ## Calidad minima
 
-La implementacion final debe superar tipos, lint, pruebas unitarias, pruebas RLS, E2E y build de produccion. Las pruebas no son opcionales para timer, fecha local, proyeccion documental, autosave o seguridad.
+La entrega debe superar tipos, lint, unitarias, RLS, E2E web, smoke Tauri, smoke Capacitor Android y builds aplicables. Timer, lifecycle, fecha local, proyeccion, draft journal, autosave y seguridad requieren pruebas.

@@ -1,6 +1,6 @@
 # ADR 0001: decisiones cerradas del MVP
 
-Estado: aceptada.
+Estado: aceptada con enmiendas tecnologicas del ADR 0002.
 
 ## Decisiones
 
@@ -11,11 +11,11 @@ Estado: aceptada.
 | Titulo de rutina | `routines.name` es fuente unica | No hay bloque de titulo duplicado |
 | Subtareas | Checklists descendientes de Activity usan completion diaria | Su check no se considera estado permanente del JSON |
 | Otros checklists | Conservan estado nativo persistente | Solo cambia la semantica dentro de Activity |
-| Fecha | Zona local actual del navegador | Backend recibe `YYYY-MM-DD` explicito |
+| Fecha | Zona local actual del dispositivo | Backend recibe `YYYY-MM-DD` explicito |
 | Hoy | Completar, iniciar y navegar; no editar | Toda edicion ocurre en la rutina |
-| Timer concurrente | Uno por pestana | Un segundo Start no reemplaza al activo |
+| Timer concurrente | Uno por contexto de ejecucion | Un segundo Start no reemplaza al activo |
 | Fin del timer | No completa la actividad | Completion siempre manual |
-| Recuperacion timer | No persiste tras recarga o cierre | Persistencia movil queda fuera del MVP |
+| Recuperacion timer | Enmendada por ADR 0002 | Se persiste snapshot local para reconciliar lifecycle |
 | Controles timer | Start, Cancel, Dismiss y Open focus | No hay pausa, resume, skip ni reset |
 | Preparacion | Una vez al inicio del plan de intervalos | No se repite por set |
 | Descansos | No hay descanso de ciclo o set despues del ultimo trabajo aplicable | El plan no termina en descanso |

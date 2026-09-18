@@ -6,7 +6,7 @@ Presentar Activities de las rutinas aplicables a la fecha local para completar, 
 
 ## Responsabilidades
 
-- Calcular y mostrar la fecha local vigente.
+- Calcular y mostrar la fecha local vigente del dispositivo.
 - Solicitar rutinas diarias y especificas coincidentes.
 - Proyectar Activities y subtareas mediante el contrato compartido.
 - Asociar completions de la misma fecha.
@@ -14,7 +14,7 @@ Presentar Activities de las rutinas aplicables a la fecha local para completar, 
 - Permitir toggle de Activity y subtarea.
 - Iniciar timer valido o volver al activo.
 - Navegar a rutina+Activity ID.
-- Reconsultar al cruzar medianoche o recuperar foco con otra fecha.
+- Reconsultar al cruzar medianoche o recibir resume con otra fecha.
 
 ## No objetivos
 
@@ -60,4 +60,4 @@ La pagina identifica Hoy y su fecha. Cada fila asocia actividad, rutina, hora y 
 
 ## Handoff
 
-Entregar ruta, read model, componentes read-only, orden, integraciones y pruebas con fixtures de distintas fechas y zonas. Consumir extractor de editor y repositorios de datos sin duplicarlos.
+Entregar feature React read-only, orden e integraciones. Consumir document-model puro, repositorios y puertos, sin BlockNote ni SDK nativo.

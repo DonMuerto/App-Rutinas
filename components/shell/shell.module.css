@@ -1,0 +1,85 @@
+.appShell {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: 16.5rem minmax(0, 1fr);
+  background: var(--canvas);
+}
+
+.appShell[data-collapsed="true"] {
+  grid-template-columns: 4.75rem minmax(0, 1fr);
+}
+
+.mainArea {
+  display: flex;
+  min-width: 0;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
+.mobileBar {
+  display: none;
+}
+
+.content {
+  min-width: 0;
+  flex: 1;
+}
+
+.mobileBackdrop {
+  display: none;
+}
+
+@media (max-width: 47.999rem) {
+  .appShell,
+  .appShell[data-collapsed="true"] {
+    display: block;
+    min-width: 0;
+  }
+
+  .mainArea {
+    min-height: 100dvh;
+  }
+
+  .mobileBar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    min-height: 4rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--canvas) 92%, transparent);
+    padding: 0.6rem 0.75rem;
+    backdrop-filter: blur(1rem);
+  }
+
+  .mobileBarLeading,
+  .mobileBarTrailing {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .mobileBarTitle {
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobileBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    display: block;
+    border: 0;
+    background: rgb(16 18 28 / 44%);
+    cursor: pointer;
+  }
+}

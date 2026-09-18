@@ -9,7 +9,8 @@
 | Bloque | ID estable dentro de una rutina | Documento BlockNote |
 | Actividad | ID de bloque Activity | Contenido y props del bloque |
 | Completion diaria | Rutina, ambito Activity, bloque y fecha | Fila `block_completions` |
-| Sesion de timer | Una por pestana | Store cliente en memoria |
+| Borrador | Usuario + rutina | Draft journal local |
+| Sesion de timer | Una por contexto de ejecucion | Snapshot local + engine puro |
 
 ## Rutina
 
@@ -18,6 +19,7 @@
 - `recurrence` es diaria o de fecha especifica; ambos estados son excluyentes.
 - `position` define un orden plano. No representa jerarquia.
 - `content` es el documento BlockNote completo.
+- `revision` aumenta en cada guardado de documento y detecta conflictos.
 - Una rutina de fecha especifica permanece editable antes y despues de su fecha.
 
 ## Actividad
@@ -49,3 +51,11 @@ Una checklist sin ancestro Activity conserva su `checked` nativo y persistente. 
 - Insertar, pegar como copia o duplicar genera IDs nuevos para todos los bloques copiados.
 - Un ID eliminado no se reutiliza intencionadamente.
 - Las filas de completion huerfanas pueden conservarse; los lectores las ignoran.
+
+## Borrador
+
+Un draft contiene version de journal, user ID, routine ID, revision remota base, generacion monotona, document envelope, fecha local y timestamp absoluto. No es fuente remota. Nunca se aplica automaticamente sobre una revision distinta; el usuario resuelve el conflicto.
+
+## Contexto de ejecucion
+
+Web usa una pestana, Tauri una unica ventana y Capacitor un WebView. Cada contexto admite un timer. No se coordinan timers entre pestanas, ventanas, dispositivos ni instalaciones.

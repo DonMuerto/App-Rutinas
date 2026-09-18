@@ -58,11 +58,19 @@ Pausa, reanudacion, skip y reset no forman parte del MVP. Agregarlos exige ampli
 
 ## Singleton
 
-- Solo una sesion ocupa el timer por pestana, incluyendo `done` sin descartar.
+- Solo una sesion ocupa el timer por contexto de ejecucion, incluyendo `done` sin descartar.
 - Un segundo Start se rechaza y ofrece volver al timer existente.
 - La sesion usa un snapshot; editar o eliminar el bloque origen no la modifica.
 - La navegacion cliente conserva la sesion.
-- Recargar o cerrar la pestana pierde la sesion en el MVP.
+- Start, transicion, Cancel y Dismiss actualizan TimerStoragePort.
+- Al iniciar/reanudar la app, un snapshot del mismo usuario se valida y reconcilia con el timestamp actual.
+- Un snapshot invalido, de otro usuario o incompatible se elimina.
+
+## Snapshot persistido
+
+Incluye version, user ID, origin, plan, fase/deadline o instante inicial y estado running/done. No incluye tokens ni documento. El engine sigue siendo puro; un controlador React coordina storage y lifecycle.
+
+No se ejecuta timer en background. Al reanudar se calcula la fase correspondiente. Sin notificaciones, una fase terminada en background solo se anuncia al volver y como maximo una vez.
 
 ## Efectos
 

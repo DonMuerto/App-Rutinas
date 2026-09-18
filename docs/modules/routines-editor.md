@@ -2,16 +2,18 @@
 
 ## Objetivo
 
-Ofrecer la pagina principal de Ritmo: una rutina editable como documento BlockNote completo, con metadatos discretos y bloque Activity registrado.
+Ofrecer la superficie principal React/BlockNote en navegador y WebViews con el mismo documento y comportamiento.
 
 ## Responsabilidades
 
-- Cargar una rutina accesible desde `/rutinas/[routineId]`.
+- Cargar una rutina accesible desde `#/rutinas/:routineId`.
 - Editar `routines.name` como encabezado fuera del documento, sin copia oculta.
 - Editar icono y recurrencia.
 - Inicializar BlockNote con `routines.content` y el esquema custom.
 - Mantener slash menu, Enter, Backspace, Tab/Shift+Tab, drag and drop, copy/paste y undo/redo soportados por BlockNote.
-- Guardar texto, props, estructura, orden e IDs estables.
+- Guardar texto, props, estructura, orden e IDs estables con revision.
+- Escribir un draft local atomico antes del autosave remoto.
+- Responder a background, close-requested y back-requested mediante LifecyclePort.
 - Integrar Activity, completion diaria y timer mediante APIs publicas.
 - Abrir y enfocar una Activity solicitada por enlace desde Hoy.
 
@@ -20,17 +22,17 @@ Ofrecer la pagina principal de Ritmo: una rutina editable como documento BlockNo
 - No modelar bloques como filas.
 - No implementar jerarquia de rutinas.
 - No interpretar todas las rutinas para Hoy.
-- No construir colaboracion en tiempo real.
+- No construir colaboracion en tiempo real ni offline-first.
 - No implementar motor ni SQL dentro del editor.
 - No usar paquetes BlockNote XL.
 
 ## Carga y guardado
 
-Un documento vacio abre una superficie utilizable. El autosave usa un debounce inicial de 750 ms; el valor puede ajustarse por evidencia, no por preferencia. Los estados visibles son sin cambios, cambios pendientes, guardando, guardado y error.
+Un documento vacio abre una superficie utilizable. El autosave usa debounce de 750 ms, generacion monotona y maximo un save en vuelo. Cada cambio actualiza draft local y luego guarda con revision esperada. Un exito viejo no puede borrar un draft nuevo.
 
-La navegacion cliente bloquea el cambio hasta vaciar el guardado pendiente o mostrar un error. Cerrar/recargar con cambios pendientes activa una advertencia nativa; si el usuario confirma salir, la posible perdida es una limitacion aceptada. Un error conserva la edicion local y permite reintentar.
+Navegacion intenta flush. Background/cierre persiste draft sin asumir red. Conflicto ofrece recargar remoto o crear una rutina nueva con el draft. Fallo de DraftStorage activa estado critico y bloquea salida. Exito elimina solo la generacion guardada.
 
-La mutacion de contenido nunca envia `name`, recurrencia o posicion. El MVP acepta ultima escritura entre pestanas y documenta que no hay merge concurrente.
+La mutacion de content nunca envia `name`, recurrencia o posicion. No hay merge automatico; revision evita ultima escritura silenciosa.
 
 ## Recurrencia
 
@@ -38,9 +40,9 @@ Elegir diaria limpia la fecha especifica. Elegir fecha especifica exige una fech
 
 ## Completions en el editor
 
-Al montar, el navegador calcula la fecha local y carga completions. Activity y checklists descendientes muestran ese estado externo. Checklists fuera de Activity usan el estado normal del documento.
+Al montar o reanudar, el dispositivo calcula fecha y carga completions. Activity y descendientes muestran estado externo; checklists normales usan documento.
 
-El agente debe completar un spike antes de integrar. La opcion preferida controla o decora el check nativo sin mutar el documento. El fallback aceptado mantiene una representacion efimera y normaliza `checked` a falso antes de persistir. Ambas opciones deben demostrar que texto, estructura, undo/redo y autosave permanecen correctos. Si ninguna funciona, debe detenerse; no puede crear silenciosamente otro tipo de subtarea.
+El spike web existente se repite en WebView2 y Android WebView, y en WKWebView cuando haya runner. Debe cubrir touch, IME, teclado virtual, clipboard, undo/redo, scroll, foco, dialogs y memoria. Si la interceptacion DOM no es estable, se bloquea release; no se crea otro editor.
 
 ## Enlace de origen
 
@@ -58,4 +60,4 @@ Despues de inicializar el editor, se busca el ID solicitado. La opcion preferida
 
 ## Handoff
 
-Entregar wrapper BlockNote, adaptadores de documento, autosave, ruta de rutina, integraciones publicas y pruebas. Documentar resultado de los spikes de completion diaria y foco por ID. No modificar internals de timer ni repositorios.
+Entregar paquete editor independiente del router, draft controller, autosave revisionado, Activity y matriz WebView. No importar SDKs nativos ni Supabase directo.

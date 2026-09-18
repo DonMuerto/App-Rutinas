@@ -27,7 +27,7 @@ Cada operacion recibe `routineId`, `scopeActivityBlockId`, `blockId`, `blockType
 
 ### Cambio de dia
 
-No se borran filas. Al cruzar medianoche o recuperar foco se calcula una fecha nueva y se consulta otra clave de cache. La ausencia equivale a incompleto.
+No se borran filas. Al cruzar medianoche o recibir resume se calcula otra fecha y query key. La ausencia equivale a incompleto.
 
 ## Reglas
 
@@ -37,6 +37,8 @@ No se borran filas. Al cruzar medianoche o recuperar foco se calcula una fecha n
 - Checklists normales no consumen este modulo.
 - Filas huerfanas se ignoran.
 - Mover una checklist a otra Activity cambia su ambito y no hereda automaticamente completion.
+- Existe una unica cache/store por usuario y contexto compartida por editor y Hoy.
+- Logout/cambio de usuario cancela mutaciones y limpia estado en memoria.
 
 ## Accesibilidad y error
 
@@ -53,4 +55,4 @@ Los controles exponen estado checked y pendiente. Un rollback se anuncia sin mov
 
 ## Handoff
 
-Entregar hooks o servicios de dominio sobre repositorios, claves de cache, optimistic update, rollback, observador de cambio de fecha y pruebas de idempotencia/medianoche. No crear queries Supabase fuera del repositorio de datos.
+Entregar hooks React sobre repositorios, optimistic update, rollback y observador basado en LifecyclePort. No crear Supabase directo ni stores separados por pantalla.

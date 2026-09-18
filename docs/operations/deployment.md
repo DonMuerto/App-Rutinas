@@ -1,52 +1,42 @@
 # Despliegue y operacion
 
-## Arquitectura prevista
+## Canales
 
-- Next.js en Vercel Hobby mientras el uso sea personal/no comercial.
-- Supabase Free para Auth, Postgres y Data API.
-- Supabase local para desarrollo y pruebas RLS.
-- GitHub Free para versionado y despliegue.
+- Web: `dist` Vite en hosting estatico HTTPS.
+- Desktop: Tauri 2, con Windows como gate MVP.
+- Mobile: Capacitor, con Android sideload como gate MVP.
+- Supabase Free: Auth, Postgres y Data API.
 
-Los limites y terminos cambian; verificarlos en las paginas oficiales antes de crear recursos o lanzar. Ningun proveedor puede exigir tarjeta ni depender de un trial temporal.
+Variables publicas: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`. Todo `VITE_*` queda en el bundle. Nunca incluir service role, passwords de vault, keystores o credenciales de firma.
 
-## Entornos
+## Web
 
-Preferencia: desarrollo local, un proyecto remoto de staging y uno de produccion, respetando el limite vigente de proyectos gratuitos. Si no hay staging remoto, previews no se conectan a produccion.
+HashRouter no necesita rewrites. Vercel Hobby puede alojar estaticos solo dentro de sus terminos personales/no comerciales. Un hosting equivalente requiere verificar limites, pero no cambia el bundle.
 
-Variables MVP permitidas:
+## Tauri
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+CI construye por OS. Windows es obligatorio; Linux/macOS cuando haya runner. CSP y capabilities se revisan como seguridad. Artefactos sin firma pueden mostrar advertencias. Firma, notarizacion y updater quedan fuera hasta aprobar presupuesto y credenciales.
 
-No configurar `SUPABASE_SERVICE_ROLE_KEY`, ni siquiera vacia en `.env.example`, para no sugerir que es parte de la arquitectura.
+## Capacitor
+
+Build Vite precede `cap sync`. Release incluye assets locales y no usa `server.url`. Android produce APK de prueba sin versionar keystore. iOS requiere macOS, Xcode y provisioning.
+
+Google Play y Apple Developer requieren cuentas/pagos; publicacion en tiendas queda fuera. Android sideload y desarrollo iOS local son los canales MVP.
 
 ## Release
 
-1. Congelar contratos del release.
-2. Ejecutar tipos, lint, unitarias, RLS, E2E y build.
-3. Revisar migraciones y compatibilidad.
-4. Aplicar primero cambios de base compatibles con frontend anterior.
-5. Desplegar frontend.
-6. Ejecutar smoke test autenticado y anonimo.
-7. Revisar logs y consumo.
+1. Congelar contratos y version.
+2. Ejecutar tipos, lint, unitarias, RLS y E2E web.
+3. Construir Vite, Tauri Windows y Capacitor Android.
+4. Aplicar primero migraciones compatibles.
+5. Desplegar web y ejecutar smoke.
+6. Probar artefactos nativos en entorno limpio.
+7. Publicar solo canales autorizados y conservar checksums.
 
-Las migraciones destructivas requieren plan de expansion/migracion/retirada. Preferir correccion hacia adelante a rollback destructivo.
+## Smoke
 
-## Smoke test
-
-- Login responde y rutas privadas rechazan anon.
-- Crear, guardar y recargar rutina funciona.
-- Hoy selecciona fecha correcta.
-- Completion marca y desmarca.
-- Usuario B no accede a rutina de A.
-- Timer y tema funcionan.
-- Desktop/movil no presentan errores de hidratacion o scroll horizontal.
-- No se registra Service Worker ni se pide permiso de notificacion.
+Auth, rutina, autosave revisionado, draft restore, Hoy, completion, timer restore, tema y logout. En native verificar bundle local, resume/back/close, secure storage y ausencia de permisos prohibidos.
 
 ## Rollback
 
-Frontend puede volver a un deploy anterior solo si el esquema sigue siendo compatible. Datos se recuperan mediante migracion correctiva o backup disponible, nunca borrando automaticamente. Un incidente RLS bloquea release, conserva evidencia, corrige politicas/grants y repite toda la matriz A/B/anon.
-
-## Uso comercial
-
-Vercel Hobby no se asume valido para cobrar usuarios. Antes de monetizar, crear una decision de hosting y revisar costes/licencias. Esto no cambia el requisito de evitar servicios con tarjeta o trial durante el MVP actual.
+Web conserva dist anterior. Desktop/Android conservan artefacto previo; drafts versionados deben migrar o seguir legibles. Base de datos se corrige hacia adelante. Incidente RLS bloquea todos los canales.

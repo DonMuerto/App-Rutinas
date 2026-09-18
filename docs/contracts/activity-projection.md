@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Transformar rutinas y documentos en un read model de solo lectura para Hoy. La proyeccion es pura, no se persiste y nunca modifica el documento recibido.
+Transformar rutinas y documentos en un read model de solo lectura para Hoy. La proyeccion es pura, no se persiste, no modifica el documento y no importa React, BlockNote ni APIs de plataforma.
 
 ## Entrada
 
@@ -52,3 +52,5 @@ Un documento parcialmente invalido no bloquea otras rutinas ni otros bloques val
 ## Navegacion
 
 El origen se representa con `routineId` y `activityBlockId`. La ruta abre la rutina y solicita foco/scroll al bloque una vez inicializado BlockNote. Si el bloque ya no existe, se abre la rutina y se informa sin romper la pagina.
+
+El href concreto lo construye NavigationPort; la proyeccion no conoce hash router, protocolo Tauri ni esquema Capacitor.

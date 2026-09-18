@@ -1,5 +1,7 @@
 # Handoff S0: plataforma e integracion
 
+> Handoff historico de la arquitectura Next.js. Conservado como evidencia; el plan M0-M5 y ADR 0002 lo superseden.
+
 ## Identidad
 
 - Sesion: S0.

@@ -6,9 +6,9 @@ Ritmo es un editor, no un dashboard. El shell facilita navegacion y estado globa
 
 ## Shell
 
-El layout privado compone validacion de sesion, sidebar, contenido, tema, Query provider y timer global. Debe permanecer Server Component salvo islas interactivas concretas. No marcar todo el layout como cliente por conveniencia.
+La raiz React compone plataforma, auth, QueryClient, tema, timer, completions, sidebar y outlet. Providers de alta frecuencia se aislan para no rerenderizar toda la app.
 
-En escritorio, el sidebar es persistente y colapsable, entre 240 y 280 px. En movil, es un drawer inicialmente cerrado. Cerrar al navegar, Escape y retorno de foco son obligatorios.
+En escritorio el sidebar es persistente/colapsable. En movil o ventana estrecha es drawer. Escape, Android back, cierre al navegar y retorno de foco son obligatorios.
 
 ## Sidebar plano
 
@@ -23,7 +23,7 @@ dnd-kit solo reordena la lista de rutinas. Debe existir alternativa Mover arriba
 | Menos de 768 px | Drawer, barra compacta, editor con margenes reducidos, paneles como sheet si no caben |
 | Desde 768 px | Sidebar persistente, columna de lectura contenida y espacio para controles BlockNote |
 
-Viewport minimo de aceptacion: 360 px. No debe existir scroll horizontal de pagina. Los controles tactiles esenciales tienen al menos 44 por 44 px.
+Viewport minimo 360 px. Usar viewport dinamico y safe-area insets. Sin scroll horizontal; controles tactiles de al menos 44 px; teclado virtual no tapa acciones.
 
 ## Tokens
 
@@ -38,7 +38,7 @@ Viewport minimo de aceptacion: 360 px. No debe existir scroll horizontal de pagi
 
 Trabajo: `#E8963D`; descanso: `#4E9A82`; destructivo: `#D96666`. Los colores semanticos no se usan como adorno.
 
-Space Grotesk se reserva para titulos y timer; Inter para cuerpo y UI. `next-themes` controla shell y BlockNote sin flash de tema incorrecto.
+Space Grotesk se reserva para titulos/timer e Inter para cuerpo/UI. Un ThemeProvider neutral sincroniza sistema, preferencia y BlockNote; no usa `next-themes`.
 
 ## Evitar
 
@@ -51,8 +51,8 @@ Space Grotesk se reserva para titulos y timer; Inter para cuerpo y UI. `next-the
 
 ## Estados y accesibilidad
 
-Cubrir carga, vacio, error, rutina no encontrada, sesion expirada, reorder pendiente y sidebar abierto/cerrado. Contraste AA, foco visible, nombres para icon buttons, drawer accesible y reduced motion son obligatorios.
+Cubrir arranque, offline/error, conflicto de draft, sesion expirada, lifecycle, reorder y drawer. Contraste AA, foco, icon labels y reduced motion son obligatorios.
 
 ## Handoff
 
-Entregar layout, tokens, tema, sidebar, drawer, reorder accesible y componentes base necesarios. No modificar editor, timer ni repositorios; consumir sus contratos.
+Entregar features React shell/sidebar/Hoy, tema y primitives DOM. No importar Next, Tauri, Capacitor ni Supabase directo.

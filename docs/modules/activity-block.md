@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Implementar Activity como bloque custom dentro del flujo del documento. Debe parecer una linea enriquecida, no una tarjeta ni un formulario separado.
+Implementar Activity como bloque custom React/BlockNote compartido entre navegador y WebViews. Debe parecer una linea enriquecida, no una tarjeta ni un formulario separado.
 
 ## Anatomia
 
@@ -13,7 +13,7 @@ Implementar Activity como bloque custom dentro del flujo del documento. Debe par
 - Accion Start cuando la configuracion es valida.
 - Acceso a configuracion contextual.
 
-El panel es popover en escritorio y puede convertirse en sheet/dialog adaptado en movil. Sigue perteneciendo al editor; no existe ruta de edicion.
+El panel es popover en escritorio y sheet/dialog en movil, elegido por espacio disponible sin imports nativos. Sigue perteneciendo al editor.
 
 ## Edicion
 
@@ -43,7 +43,7 @@ Toggle completion envia rutina, Activity como ambito y objetivo, y fecha local. 
 
 ## Accesibilidad
 
-Checkbox, Start, hora y configuracion tienen nombres accesibles. Los botones de stepper anuncian magnitud, unidad y valor. El estado no depende solo de color. El foco permanece predecible al abrir y cerrar el panel. Controles tactiles esenciales alcanzan 44 px.
+Checkbox, Start, hora y configuracion tienen nombres accesibles. Los steppers anuncian magnitud, unidad y valor. El estado no depende solo de color. El foco permanece predecible. Controles tactiles alcanzan 44 px y el teclado virtual no oculta el activo. Probar pointer, touch, IME, safe areas y reduced motion.
 
 ## Handoff
 

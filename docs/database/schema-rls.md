@@ -12,12 +12,17 @@ Este documento define el resultado requerido de las migraciones, no una migracio
 | `icon` | Texto opcional |
 | `recurrence_type` | `daily` o `specific_date` |
 | `specific_date` | Fecha obligatoria solo para `specific_date` |
-| `content` | JSONB obligatorio, coleccion vacia por defecto |
+| `content` | JSONB obligatorio, envelope version 1 por defecto |
 | `position` | Entero no negativo para orden plano |
+| `revision` | Entero grande no negativo, inicia en 0 y aumenta al guardar content |
 | `created_at` | Timestamp con zona generado por servidor |
 | `updated_at` | Timestamp con zona actualizado por servidor |
 
-No existe `parent_id`. Deben existir indices para usuario+posicion, usuario+tipo de recurrencia y usuario+fecha especifica.
+No existe `parent_id`. Deben existir indices para usuario+posicion, usuario+tipo de recurrencia y usuario+fecha especifica. Crear rutina usa RPC `security invoker` y lock para asignar posicion final sin colisiones. La migracion envuelve arrays historicos antes de exigir el envelope.
+
+## Guardado con revision
+
+Una funcion `security invoker` recibe routine ID, revision esperada y documento. Actualiza solo cuando usuario y revision coinciden, incrementa revision, mantiene `updated_at` y devuelve la fila minima necesaria. Cero filas significa conflicto/inaccesible; el repositorio distingue conflicto solo para una rutina previamente cargada por el usuario.
 
 ## Tabla `block_completions`
 
@@ -66,4 +71,5 @@ El rol `authenticated` recibe grants explicitos necesarios para la Data API. `an
 - Las combinaciones invalidas de recurrencia son rechazadas por constraint.
 - Las claves unicas hacen idempotentes los reintentos.
 - `updated_at` se mantiene en base y no depende de que cada cliente lo recuerde.
+- `revision` evita sobrescritura silenciosa entre dispositivos; no implementa merge colaborativo.
 - Las completions huerfanas por bloques eliminados se toleran y pueden limpiarse en una fase futura.

@@ -8,22 +8,23 @@
 - Las escrituras de metadatos, documento y completions estan separadas.
 - Las mutaciones de completion son idempotentes.
 - Los componentes no crean queries Supabase directas.
+- Los repositorios usan Supabase JS en cliente y no dependen de Next.js ni cookies servidor.
 
 ## Rutinas
 
 | Operacion | Regla |
 |---|---|
 | Listar | Metadatos ordenados, sin cargar `content` para el sidebar |
-| Obtener | Rutina completa accesible por ID |
+| Obtener | Rutina completa con revision accesible por ID |
 | Crear | Nombre valido, recurrencia valida, documento vacio y posicion final |
 | Renombrar | Actualiza solo `name` |
 | Cambiar recurrencia | Actualiza tipo y fecha como una unidad valida |
-| Guardar documento | Actualiza solo `content` y auditoria |
+| Guardar documento | Recibe revision esperada, actualiza content y devuelve revision nueva |
 | Reordenar | Ejecuta una operacion transaccional con la lista completa de IDs |
 | Eliminar | Borra la rutina; completions caen por cascada |
 | Listar para Hoy | Recibe fecha y devuelve diarias o especificas coincidentes con contenido |
 
-El MVP acepta ultima escritura para concurrencia de documento. El estado local no debe presentarse como guardado si fallo la persistencia.
+Guardar documento usa compare-and-swap. Si la revision remota no coincide, devuelve conflicto sin sobrescribir. El draft local se conserva hasta guardar o descartar explicitamente.
 
 ## Completions
 
@@ -39,13 +40,17 @@ La identidad canonica y objetivo de upsert es `routine_id + scope_activity_block
 
 El repositorio invoca una unica operacion Postgres `security invoker` que recibe la lista completa y sin duplicados de IDs en el orden deseado. Antes de actualizar valida que coincide exactamente con las rutinas del usuario autenticado. Toda posicion se actualiza en la misma transaccion o ninguna cambia. Solo `authenticated` puede ejecutarla y RLS permanece aplicable. No se permiten secuencias de updates independientes desde la UI.
 
+Crear rutina tambien usa una operacion transaccional `security invoker` con lock para asignar la posicion final sin colisiones entre contextos concurrentes.
+
 ## Auth
 
-El modulo publica operaciones de registro, login, logout, restauracion y usuario requerido. Un recurso ajeno se trata como inaccesible. Middleware o redireccion visual no sustituyen la validacion de sesion ni RLS.
+El modulo publica initialize, registro, login, logout, refresh, suscripcion a auth y usuario requerido. Un guard React controla UX, pero no es frontera de seguridad. Un recurso ajeno se trata como inaccesible y RLS decide acceso.
+
+Supabase recibe un storage adapter desde PlatformServices. El modulo no importa Tauri/Capacitor ni decide como se cifra el token.
 
 ## Errores
 
-Los consumidores deben distinguir: no autenticado, no encontrado/inaccesible, validacion, conflicto de timer, red, RLS y documento invalido. Los mensajes para usuario no exponen detalles SQL ni existencia de datos ajenos.
+Los consumidores distinguen: no autenticado, no encontrado/inaccesible, validacion, `DOCUMENT_CONFLICT`, conflicto de timer, red, RLS y documento invalido. Los mensajes no exponen SQL ni existencia de datos ajenos.
 
 ## Cache
 
@@ -54,3 +59,5 @@ Los consumidores deben distinguir: no autenticado, no encontrado/inaccesible, va
 - Guardar contenido actualiza la rutina y obliga a refrescar su proyeccion de Hoy.
 - Completion actualiza editor y Hoy para la misma fecha.
 - Al cruzar medianoche se usan claves nuevas; no se mutan datos del dia anterior.
+- Todas las claves se segmentan por user ID y se eliminan al cambiar/logout de usuario.
+- Resume revalida sesion y queries activas sin crear waterfalls innecesarios.
