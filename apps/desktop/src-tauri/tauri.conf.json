@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.ritmo.app",
   "build": {
-    "beforeDevCommand": "pnpm --dir ../../.. dev",
+    "beforeDevCommand": "pnpm --dir ../.. dev",
     "devUrl": "http://127.0.0.1:5173",
-    "beforeBuildCommand": "pnpm --dir ../../.. build",
+    "beforeBuildCommand": "pnpm --dir ../.. build",
     "frontendDist": "../../../dist"
   },
   "app": {

@@ -587,11 +587,12 @@ describeWithLocalSupabase("RLS through real Data API sessions", () => {
         .in("id", createdIds);
     expect(createdDefaultsError).toBeNull();
     expect(createdDefaults).toHaveLength(3);
-    expect(createdDefaults?.every(({ content, revision }) =>
-      revision === 0 &&
-      JSON.stringify(content) ===
-        JSON.stringify({ schemaVersion: 1, blocks: [] })
-    )).toBe(true);
+    for (const created of createdDefaults ?? []) {
+      expect(created).toEqual({
+        content: { schemaVersion: 1, blocks: [] },
+        revision: 0,
+      });
+    }
 
     const draftCopyRequestId = crypto.randomUUID();
     const draftCopyDocument = {
