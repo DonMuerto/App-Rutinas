@@ -29,8 +29,9 @@ jobs:
         with:
           node-version: 22.12.0
 
-      - name: Enable pnpm
-        run: corepack enable && corepack prepare pnpm@10.17.1 --activate
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -86,8 +87,9 @@ jobs:
         with:
           node-version: 22.12.0
 
-      - name: Enable pnpm
-        run: corepack enable && corepack prepare pnpm@10.17.1 --activate
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -113,7 +115,7 @@ jobs:
 
       - name: Stop local Supabase
         if: always()
-        run: supabase stop
+        run: command -v supabase >/dev/null 2>&1 && supabase stop || true
 
   tauri:
     name: Tauri Windows smoke
@@ -126,9 +128,9 @@ jobs:
         with:
           node-version: 22.12.0
 
-      - name: Enable pnpm
-        shell: pwsh
-        run: corepack enable; corepack prepare pnpm@10.17.1 --activate
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -148,8 +150,9 @@ jobs:
         with:
           node-version: 22.12.0
 
-      - name: Enable pnpm
-        run: corepack enable && corepack prepare pnpm@10.17.1 --activate
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
