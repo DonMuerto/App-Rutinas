@@ -1,4 +1,5 @@
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $true
 
 if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
   throw "pnpm is required to run the Tauri smoke harness."
