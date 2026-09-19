@@ -3,9 +3,9 @@
 ## Identidad
 
 - Sesion/rol: M0, plataforma e integracion.
-- Ola/gate: Olas 0 y 2 completadas; endurecimiento de Ola 3 con web y RLS confirmados en CI, y reparaciones de los gates nativos listas para repetir en runners.
-- Owner receptor: M5 para confirmar la nueva corrida Tauri/Android; M1 solo si se habilita un proyecto Supabase remoto.
-- Base commit y estado de worktree: migracion e integracion publicadas hasta `e3868bc` (`fix: repair release smoke gates`). Las reparaciones nativas posteriores parten de ese commit; cambios locales ajenos en skills permanecen preservados y excluidos.
+- Ola/gate: Olas 0 y 2 completadas; Ola 3 confirmada en CI para web/E2E, RLS, Tauri Windows y Capacitor Android.
+- Owner receptor: M1 si se habilita un proyecto Supabase remoto; M5 para la matriz manual BlockNote/touch/IME/clipboard y targets Apple.
+- Base commit y estado de worktree: integracion y gates nativos publicados hasta `b656c95` (`ci: use Java 21 for Android smoke`). Cambios locales ajenos en skills permanecen preservados y excluidos.
 
 ## Cambios
 
@@ -16,7 +16,7 @@
 - Lifecycle: suscripciones con prioridad ordenan dialogo de salida, drawer, proteccion local y navegacion. Back protege primero el draft y dispara flush remoto sin bloquear indefinidamente la navegacion; un fallo de DraftStorage si bloquea salida.
 - Routing y resiliencia: `vite.base` es relativo, no se sintetiza Back desde `popstate`, el handler nativo de Capacitor permanece activo y los error boundaries aislan una ruta pesada sin destruir los recursos/drafts del usuario.
 - Dependencias: manifests y `pnpm-lock.yaml` incluyen React 19, Vite 8, Tauri 2.11, Capacitor 8.5, React Router 7, TanStack Query, Supabase JS, BlockNote base y secure storage 8. No se agregaron paquetes BlockNote XL.
-- Gates nativos: Tauri incorpora el iconset requerido por `tauri-build` y el harness PowerShell corta ante el primer comando nativo fallido. Android habilita KVM y usa un launcher propio que espera boot y Package Manager antes de ejecutar el smoke, evitando la carrera conocida de `reactivecircus/android-emulator-runner` al invocar el servicio `input` prematuramente.
+- Gates nativos: Tauri incorpora el iconset requerido por `tauri-build` y el harness PowerShell corta ante el primer comando nativo fallido. Android usa Temurin 21, habilita KVM y ejecuta un launcher propio que espera boot y Package Manager antes del smoke, evitando la carrera conocida de `reactivecircus/android-emulator-runner` al invocar el servicio `input` prematuramente.
 - Cambios concurrentes preservados: no se revirtieron cambios ajenos. El arbol Next previo permanece recuperable en el checkpoint autorizado; no hay dos implementaciones activas en el worktree actual.
 
 ## Contratos
@@ -32,19 +32,19 @@
 
 - Tipos, lint, formato, unitarias y build: `typecheck`, `lint` y `format` pasan; 26 archivos y 127 pruebas unitarias pasan; build Vite pasa con 2951 modulos. BlockNote permanece en `routine-route-*.js/css`, separado del chunk inicial.
 - Build: existe warning no bloqueante por chunks minificados mayores a 500 kB (`src` y `routine-route`); el editor pesado ya esta lazy y no retrasa el arranque inicial.
-- RLS/E2E: la corrida CI `35425909735` confirma la suite RLS dinamica A/B/anon y el gate web. Playwright local pasa 12/12 en Chromium desktop/mobile y viewports 360/768/1440; valida bootstrap real, guard privado, recarga HashRouter, auth local sin red, ausencia de errores y ausencia de Service Worker.
-- Web/Tauri/Capacitor: build web y `cap sync` pasan para Android/iOS usando el `dist/` final; los assets Vite de Android coinciden byte a byte con `dist/`, excluyendo solo los dos bridges Cordova generados por Capacitor. `tauri info` parsea app/CSP/capabilities, detecta WebView2 153 y las versiones JS de Tauri/opener. El icono Windows generado contiene seis capas y satisface el recurso requerido por `tauri-build`.
-- Plataformas no verificadas localmente: Tauri build/runtime bloqueado por falta de Rust, Cargo, MSVC y Windows SDK. Android runtime/emulador esta bloqueado por falta de Android SDK, Java y ADB en esta maquina. Las correcciones de ambos gates requieren confirmacion en CI; iOS/macOS no se aprueban sin macOS/Xcode.
-- Evidencia visual/dispositivo: responsive web automatizado en 360/768/1440. No hubo smoke manual de BlockNote en WebView2, Android WebView o WKWebView.
+- RLS/E2E: la corrida CI `35428880760` confirma la suite RLS dinamica A/B/anon y el gate web completo. Playwright local pasa 12/12 en Chromium desktop/mobile y viewports 360/768/1440; valida bootstrap real, guard privado, recarga HashRouter, auth local sin red, ausencia de errores y ausencia de Service Worker.
+- Web/Tauri/Capacitor: la corrida CI `35428880760` pasa los cuatro jobs. Tauri Windows construye los bundles MSI/NSIS y supera el startup smoke de `ritmo.exe` en 7m06s. Capacitor Android construye la APK, arranca un emulador API 35 con KVM, instala la app y supera el smoke en 3m57s. Build web y `cap sync` tambien pasan para Android/iOS usando el `dist/` final; los assets Vite de Android coinciden byte a byte con `dist/`, excluyendo solo los dos bridges Cordova generados por Capacitor.
+- Plataformas no verificadas localmente: Tauri y Android no pueden repetirse en esta maquina por falta de sus toolchains, pero quedan verificados en runners CI reales. iOS/macOS siguen sin aprobarse porque requieren macOS/Xcode.
+- Evidencia visual/dispositivo: responsive web automatizado en 360/768/1440 y startup smoke automatizado en WebView2/Android WebView. No hubo smoke manual autenticado de BlockNote en WebView2, Android WebView o WKWebView.
 - Particularidad del entorno: `pnpm` se ejecuto mediante `npm exec --yes pnpm@10.17.1 -- <script>`; existen procesos Vite locales previos en 5173/4173, por lo que Playwright usa un servidor aislado en 4273 y nunca reutiliza uno existente.
 
 ## Riesgos
 
 - Casos limite cubiertos: concurrencia de drafts, autosave/restauracion, conflicto remoto, copia idempotente, logout/expiracion, timer restore/background, completion optimista, prioridades Back, errores de ruta y cambio de rutina con conflicto anterior.
-- Limitaciones y bloqueos: B-08, E-03, G-02 y G-05 requieren runners/dispositivos nativos. A-01 completo requiere credenciales/configuracion Supabase real en los tres targets; el despliegue Vercel muestra configuracion requerida hasta recibir URL y anon key autorizadas.
+- Limitaciones y bloqueos: G-02 queda confirmado por la corrida CI `35428880760`; B-08 y E-03 aun requieren pruebas autenticadas/manuales de editor, teclado y lifecycle en dispositivos nativos, y G-05 requiere macOS/Xcode. A-01 completo requiere credenciales/configuracion Supabase real en los tres targets; el despliegue Vercel muestra configuracion requerida hasta recibir URL y anon key autorizadas.
 - Cobertura E2E diferida: el smoke integrado cubre acceso no autenticado. Auth real, CRUD/editor, conflicto, Hoy, timer y logout estan cubiertos por unitarias de modulo, pero aun no por un E2E autenticado de producto.
 - Rendimiento diferido: el chunk lazy del editor ronda 937 kB minificado y debe observarse en dispositivos de gama baja; no bloquea el chunk inicial.
-- Trabajo diferido: confirmar en CI el nuevo Tauri Windows y Android smoke; realizar matriz manual BlockNote/touch/IME/clipboard; ampliar Playwright con fixtures autenticados cuando exista un entorno Supabase de prueba.
+- Trabajo diferido: realizar matriz manual BlockNote/touch/IME/clipboard; ampliar Playwright con fixtures autenticados cuando exista un entorno Supabase de prueba; ejecutar los targets Apple en macOS/Xcode.
 
 ## Confirmaciones
 
