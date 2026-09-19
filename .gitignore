@@ -25,6 +25,7 @@ node_modules/
 # tooling
 *.tsbuildinfo
 .eslintcache
+/.vercel
 
 # debug
 npm-debug.log*
