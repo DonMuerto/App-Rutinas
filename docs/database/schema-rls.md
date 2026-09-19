@@ -20,6 +20,8 @@ Este documento define el resultado requerido de las migraciones, no una migracio
 
 No existe `parent_id`. Deben existir indices para usuario+posicion, usuario+tipo de recurrencia y usuario+fecha especifica. Crear rutina usa RPC `security invoker` y lock para asignar posicion final sin colisiones. La migracion envuelve arrays historicos antes de exigir el envelope.
 
+Crear una copia desde borrador usa `create_routine_from_draft`, tambien `security invoker` y bajo el mismo lock por usuario. Recibe una rutina origen, el envelope exacto, metadatos y un `request_id` UUID. Solo crea si el origen es visible bajo RLS, asigna `max(position) + 1`, persiste el documento en el insert con revision `0` y devuelve `NULL` tanto para un origen inexistente como ajeno.
+
 ## Guardado con revision
 
 Una funcion `security invoker` recibe routine ID, revision esperada y documento. Actualiza solo cuando usuario y revision coinciden, incrementa revision, mantiene `updated_at` y devuelve la fila minima necesaria. Cero filas significa conflicto/inaccesible; el repositorio distingue conflicto solo para una rutina previamente cargada por el usuario.
@@ -44,16 +46,22 @@ Se requieren indices por rutina+fecha y por la clave logica.
 
 Una funcion transaccional `security invoker` recibe la lista completa ordenada, rechaza duplicados o IDs ajenos/faltantes y actualiza posiciones contiguas. Se revoca ejecucion publica/anonima y se concede a `authenticated`. RLS sigue activa dentro de la operacion. Las pruebas fuerzan entradas invalidas y confirman que no existe actualizacion parcial.
 
+## Idempotencia de copia de borrador
+
+`routine_draft_copy_requests` conserva la relacion minima `user_id + request_id -> routine_id`. La clave primaria compuesta aisla la idempotencia por usuario. `routine_id` no tiene `ON DELETE CASCADE`: eliminar la copia no habilita reutilizar el request para crear otra rutina.
+
+La tabla tiene RLS y no admite update ni delete desde Data API. `authenticated` recibe solo los grants que necesita la RPC `security invoker`; sus policies de select/insert exigen propietario y un contexto transaccional ligado al `request_id` que configura la propia RPC. Una consulta o insert directo no puede leer ni reservar claves. Usuario y resultado se escriben atomicamente con la rutina.
+
 ## RLS
 
 RLS permanece habilitada en todas las tablas privadas.
 
-| Operacion | `routines` | `block_completions` |
-|---|---|---|
-| Select | Solo `user_id = auth.uid()` | Solo si la rutina pertenece a `auth.uid()` |
-| Insert | `WITH CHECK` de propietario | `WITH CHECK` via rutina propietaria |
-| Update | `USING` y `WITH CHECK` de propietario | `USING` y `WITH CHECK` via rutina |
-| Delete | Solo propietario | Solo via rutina propietaria |
+| Operacion | `routines` | `block_completions` | `routine_draft_copy_requests` |
+|---|---|---|---|
+| Select | Solo `user_id = auth.uid()` | Solo si la rutina pertenece a `auth.uid()` | Solo propietario y request activo dentro de la RPC |
+| Insert | `WITH CHECK` de propietario | `WITH CHECK` via rutina propietaria | Solo propietario y request activo dentro de la RPC |
+| Update | `USING` y `WITH CHECK` de propietario | `USING` y `WITH CHECK` via rutina | Sin grant ni policy |
+| Delete | Solo propietario | Solo via rutina propietaria | Sin grant ni policy |
 
 El rol `authenticated` recibe grants explicitos necesarios para la Data API. `anon` no recibe acceso a datos privados. No se deshabilita RLS para corregir problemas de grants.
 

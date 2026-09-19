@@ -1,8 +1,12 @@
-.next
+.agents
+apps/mobile/android
+apps/mobile/ios
+apps/desktop/src-tauri/gen
+apps/desktop/src-tauri/target
 coverage
 docs
 node_modules
-next-env.d.ts
 playwright-report
 pnpm-lock.yaml
+supabase
 test-results

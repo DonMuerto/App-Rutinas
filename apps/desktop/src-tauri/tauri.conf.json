@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Ritmo",
+  "version": "0.1.0",
+  "identifier": "com.ritmo.app",
+  "build": {
+    "beforeDevCommand": "pnpm --dir ../../.. dev",
+    "devUrl": "http://127.0.0.1:5173",
+    "beforeBuildCommand": "pnpm --dir ../../.. build",
+    "frontendDist": "../../../dist"
+  },
+  "app": {
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost https://*.supabase.co wss://*.supabase.co; img-src 'self' asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' blob:; object-src 'none'; frame-src 'none'; base-uri 'none'"
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "Ritmo",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 360,
+        "minHeight": 640,
+        "resizable": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all"
+  }
+}

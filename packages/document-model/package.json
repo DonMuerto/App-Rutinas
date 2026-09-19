@@ -1,0 +1,12 @@
+{
+  "name": "@ritmo/document-model",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ritmo/core": "workspace:*"
+  }
+}

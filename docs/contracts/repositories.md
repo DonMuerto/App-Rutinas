@@ -17,6 +17,7 @@
 | Listar | Metadatos ordenados, sin cargar `content` para el sidebar |
 | Obtener | Rutina completa con revision accesible por ID |
 | Crear | Nombre valido, recurrencia valida, documento vacio y posicion final |
+| Crear desde borrador | Copia atomica e idempotente del documento exacto de una rutina accesible |
 | Renombrar | Actualiza solo `name` |
 | Cambiar recurrencia | Actualiza tipo y fecha como una unidad valida |
 | Guardar documento | Recibe revision esperada, actualiza content y devuelve revision nueva |
@@ -42,6 +43,8 @@ El repositorio invoca una unica operacion Postgres `security invoker` que recibe
 
 Crear rutina tambien usa una operacion transaccional `security invoker` con lock para asignar la posicion final sin colisiones entre contextos concurrentes.
 
+Crear desde borrador recibe `sourceRoutineId`, el `RoutineDocument` exacto, nombre, icono, recurrencia y un `requestId` UUID estable para el intento logico. La RPC verifica que la rutina origen pertenece al usuario autenticado sin distinguir entre un ID inexistente y uno ajeno, crea una unica rutina al final del sidebar con revision inicial `0`, y registra el resultado en la misma transaccion. Repetir `userId + requestId` devuelve el mismo ID y nunca crea otra fila; el documento inicial no pasa por un segundo guardado.
+
 ## Auth
 
 El modulo publica initialize, registro, login, logout, refresh, suscripcion a auth y usuario requerido. Un guard React controla UX, pero no es frontera de seguridad. Un recurso ajeno se trata como inaccesible y RLS decide acceso.
@@ -57,6 +60,7 @@ Los consumidores distinguen: no autenticado, no encontrado/inaccesible, validaci
 - Las claves incluyen usuario implicito por sesion, recurso y fecha cuando corresponda.
 - Renombrar actualiza sidebar, cabecera y Hoy.
 - Guardar contenido actualiza la rutina y obliga a refrescar su proyeccion de Hoy.
+- Crear desde borrador usa las mismas invalidaciones de sidebar y Hoy que Crear.
 - Completion actualiza editor y Hoy para la misma fecha.
 - Al cruzar medianoche se usan claves nuevas; no se mutan datos del dia anterior.
 - Todas las claves se segmentan por user ID y se eliminan al cambiar/logout de usuario.

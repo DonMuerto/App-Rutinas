@@ -1,0 +1,16 @@
+{
+  "name": "@ritmo/platform-capacitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@aparajita/capacitor-secure-storage": "8.0.0",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.2",
+    "@ritmo/platform": "workspace:*",
+    "@ritmo/platform-web": "workspace:*"
+  }
+}

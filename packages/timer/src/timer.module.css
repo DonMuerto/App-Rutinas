@@ -1,0 +1,365 @@
+.backdrop {
+  position: fixed;
+  z-index: 1000;
+  display: grid;
+  overflow: auto;
+  place-items: center;
+  inset: 0;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      rgb(233 169 47 / 18%),
+      transparent min(62vw, 36rem)
+    ),
+    rgb(13 12 10 / 97%);
+  color: #faf8f3;
+}
+
+.dialog {
+  --timer-accent: #e9a92f;
+  position: relative;
+  display: grid;
+  width: min(100%, 46rem);
+  min-height: min(42rem, calc(100dvh - 2rem));
+  align-content: center;
+  justify-items: center;
+  overflow: hidden;
+  padding: clamp(3.25rem, 8vw, 5rem) clamp(1rem, 5vw, 4rem) 2rem;
+  outline: none;
+}
+
+.dialog[data-phase="cycle-rest"],
+.dialog[data-phase="set-rest"] {
+  --timer-accent: #99b49a;
+}
+
+.dialog[data-phase="prepare"] {
+  --timer-accent: #c9b89b;
+}
+
+.dialog[data-phase="done"] {
+  --timer-accent: #f0e6cf;
+}
+
+.closeButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.closeButton:hover,
+.closeButton:focus-visible,
+.primaryButton:focus-visible,
+.cancelButton:focus-visible,
+.dockButton:focus-visible {
+  outline: 3px solid var(--timer-accent, #e9a92f);
+  outline-offset: 3px;
+}
+
+.closeButton:hover {
+  border-color: var(--timer-accent);
+}
+
+.signalFlare {
+  position: absolute;
+  border: 1px solid var(--timer-accent);
+  border-radius: 50%;
+  pointer-events: none;
+  inset: 17% 8%;
+  opacity: 0;
+  animation: timer-signal-flare 650ms ease-out;
+}
+
+.header {
+  max-width: 36rem;
+  text-align: center;
+}
+
+.routine {
+  margin: 0 0 0.65rem;
+  color: rgb(250 248 243 / 72%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-family: "Space Grotesk", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.35rem, 4vw, 2.4rem);
+  font-weight: 560;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.timerFace {
+  position: relative;
+  display: grid;
+  width: min(74vw, 18.5rem);
+  margin: clamp(1.4rem, 4vh, 2.5rem) 0 1.25rem;
+  place-items: center;
+  aspect-ratio: 1;
+}
+
+.ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+
+.ringTrack,
+.ringProgress {
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.ringTrack {
+  stroke: rgb(255 255 255 / 14%);
+}
+
+.ringProgress {
+  stroke: var(--timer-accent);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 250ms linear;
+}
+
+.timerText {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.phase {
+  margin: 0 0 0.35rem;
+  color: var(--timer-accent);
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.time {
+  margin: 0;
+  font-family: "Space Grotesk", ui-monospace, monospace;
+  font-size: clamp(3.1rem, 14vw, 6.5rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 520;
+  letter-spacing: -0.07em;
+  line-height: 0.95;
+}
+
+.details {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  color: rgb(250 248 243 / 76%);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.details p {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(1.5rem, 4vh, 2.5rem);
+}
+
+.primaryButton,
+.cancelButton,
+.dockButton {
+  min-height: 2.75rem;
+  border-radius: 999px;
+  padding: 0.7rem 1.25rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primaryButton {
+  border: 1px solid var(--timer-accent);
+  background: var(--timer-accent);
+  color: #17140e;
+}
+
+.cancelButton {
+  border: 1px solid rgb(255 255 255 / 30%);
+  background: transparent;
+  color: #faf8f3;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.dock {
+  --timer-accent: #e9a92f;
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 900;
+  display: grid;
+  width: min(28rem, calc(100vw - 2rem));
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem;
+  border: 1px solid rgb(120 105 75 / 38%);
+  border-radius: 1rem;
+  background: rgb(28 26 22 / 97%);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 28%);
+  color: #faf8f3;
+}
+
+.dock[data-phase="cycle-rest"],
+.dock[data-phase="set-rest"] {
+  --timer-accent: #99b49a;
+}
+
+.dock[data-phase="prepare"],
+.dock[data-phase="done"] {
+  --timer-accent: #c9b89b;
+}
+
+.dockPulse {
+  position: absolute;
+  border: 1px solid var(--timer-accent);
+  border-radius: inherit;
+  pointer-events: none;
+  inset: -1px;
+  animation: timer-dock-pulse 650ms ease-out;
+}
+
+.dockCopy {
+  min-width: 0;
+}
+
+.dockOrigin,
+.dockStatus {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.dockOrigin span,
+.dockStatus span:last-child {
+  overflow: hidden;
+  color: rgb(250 248 243 / 68%);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dockOrigin strong {
+  overflow: hidden;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dockStatus {
+  margin-top: 0.25rem;
+  color: var(--timer-accent);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+.dockButton {
+  min-width: 2.75rem;
+  border: 1px solid rgb(255 255 255 / 28%);
+  background: transparent;
+  color: inherit;
+  font-size: 0.78rem;
+}
+
+@keyframes timer-signal-flare {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes timer-dock-pulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.96);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+@media (max-width: 36rem) {
+  .backdrop {
+    place-items: stretch;
+  }
+
+  .dialog {
+    min-height: calc(
+      100dvh - max(1rem, env(safe-area-inset-top)) -
+        max(1rem, env(safe-area-inset-bottom))
+    );
+  }
+
+  .dock {
+    right: max(0.65rem, env(safe-area-inset-right));
+    bottom: max(0.65rem, env(safe-area-inset-bottom));
+    left: max(0.65rem, env(safe-area-inset-left));
+    width: auto;
+  }
+
+  .dockStatus span:last-child {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ringProgress {
+    transition: none;
+  }
+
+  .signalFlare,
+  .dockPulse {
+    animation: none;
+    opacity: 0.7;
+  }
+}

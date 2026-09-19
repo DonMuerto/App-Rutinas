@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: "html",
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: "http://127.0.0.1:4273",
     trace: "on-first-retry",
   },
   projects: [
@@ -27,8 +27,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev",
-    url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
+    command: "pnpm --filter @ritmo/client dev --port 4273",
+    env: {
+      ...process.env,
+      VITE_SUPABASE_ANON_KEY: "playwright-public-anon-key",
+      VITE_SUPABASE_URL: "http://127.0.0.1:54321",
+    },
+    url: "http://127.0.0.1:4273",
+    reuseExistingServer: false,
   },
 });

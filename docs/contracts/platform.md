@@ -6,7 +6,7 @@ La aplicacion recibe un objeto estable que agrupa capacidades. Las features cons
 
 ## LifecyclePort
 
-Eventos: active, background, resume, close-requested y back-requested. La suscripcion devuelve unsubscribe. Web adapta visibility/pagehide; Tauri adapta ventana; Capacitor adapta App lifecycle y Android back.
+Eventos: active, background, resume, close-requested y back-requested. La suscripcion devuelve unsubscribe y acepta una prioridad opcional; close/back se despachan de mayor a menor prioridad hasta que un listener responde `handled`. Web adapta visibility/pagehide; Tauri adapta ventana; Capacitor adapta App lifecycle y Android back.
 
 Close/back permiten responder si la navegacion fue manejada o debe continuar. Ningun listener promete tiempo ilimitado para red.
 

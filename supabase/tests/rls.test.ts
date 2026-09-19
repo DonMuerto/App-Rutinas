@@ -1,12 +1,14 @@
 // @vitest-environment node
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
-import type { Database } from "../../lib/supabase/database.types";
+import {
+  createSupabaseDataClient,
+  type DataClient,
+} from "../../packages/data-auth/src/client";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const url = process.env.VITE_SUPABASE_URL;
+const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
 const runRlsTests = process.env.RUN_SUPABASE_RLS_TESTS === "1";
 const isLoopback = (() => {
   if (!url) {
@@ -23,7 +25,7 @@ const isLoopback = (() => {
 
 if (runRlsTests && (!url || !anonKey || !isLoopback)) {
   throw new Error(
-    "RLS tests require explicit NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY values pointing to loopback.",
+    "RLS tests require explicit VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY values pointing to loopback.",
   );
 }
 
@@ -35,9 +37,21 @@ function anonymousClient() {
     throw new Error("Supabase local test environment is not configured.");
   }
 
-  return createClient<Database>(url, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const values = new Map<string, string>();
+  return createSupabaseDataClient(
+    { url, anonKey },
+    {
+      async get(key) {
+        return values.get(key) ?? null;
+      },
+      async set(key, value) {
+        values.set(key, value);
+      },
+      async remove(key) {
+        values.delete(key);
+      },
+    },
+  );
 }
 
 async function authenticatedClient(label: string) {
@@ -57,7 +71,7 @@ async function authenticatedClient(label: string) {
 }
 
 async function insertRoutine(
-  client: SupabaseClient<Database>,
+  client: DataClient,
   userId: string,
   name: string,
   position: number,
@@ -70,7 +84,7 @@ async function insertRoutine(
       recurrence_type: "daily",
       specific_date: null,
       position,
-      content: [],
+      content: { schemaVersion: 1, blocks: [] },
     })
     .select("id")
     .single();
@@ -228,6 +242,93 @@ describeWithLocalSupabase("RLS through real Data API sessions", () => {
       .eq("id", routineA);
     expect(overwriteRoutineAudit).not.toBeNull();
 
+    const { error: directDocumentUpdate } = await userA.client
+      .from("routines")
+      .update({
+        content: {
+          schemaVersion: 1,
+          blocks: [{ id: "direct-write-must-fail" }],
+        },
+      })
+      .eq("id", routineA);
+    expect(directDocumentUpdate).not.toBeNull();
+
+    const { error: directRevisionUpdate } = await userA.client
+      .from("routines")
+      .update({ revision: 99 })
+      .eq("id", routineA);
+    expect(directRevisionUpdate).not.toBeNull();
+
+    const firstDocument = {
+      schemaVersion: 1 as const,
+      blocks: [
+        {
+          id: "activity-a",
+          type: "activity",
+          children: [{ id: "check-a", type: "checkListItem" }],
+        },
+      ],
+    };
+    const { data: firstSave, error: firstSaveError } = await userA.client.rpc(
+      "save_routine_document",
+      {
+        routine_id: routineA,
+        expected_revision: 0,
+        document: firstDocument,
+      },
+    );
+    expect(firstSaveError).toBeNull();
+    expect(firstSave).toHaveLength(1);
+    expect(firstSave?.[0]?.new_revision).toBe(1);
+
+    const { data: staleSave, error: staleSaveError } = await userA.client.rpc(
+      "save_routine_document",
+      {
+        routine_id: routineA,
+        expected_revision: 0,
+        document: { schemaVersion: 1, blocks: [{ id: "stale" }] },
+      },
+    );
+    expect(staleSaveError).toBeNull();
+    expect(staleSave).toEqual([]);
+
+    const { data: identicalSave, error: identicalSaveError } =
+      await userA.client.rpc("save_routine_document", {
+        routine_id: routineA,
+        expected_revision: 1,
+        document: firstDocument,
+      });
+    expect(identicalSaveError).toBeNull();
+    expect(identicalSave?.[0]?.new_revision).toBe(2);
+
+    const { data: savedRoutine, error: savedRoutineError } =
+      await userA.client
+        .from("routines")
+        .select("content, revision")
+        .eq("id", routineA)
+        .single();
+    expect(savedRoutineError).toBeNull();
+    expect(savedRoutine).toEqual({ content: firstDocument, revision: 2 });
+
+    const { data: foreignSave, error: foreignSaveError } =
+      await userB.client.rpc("save_routine_document", {
+        routine_id: routineA,
+        expected_revision: 2,
+        document: { schemaVersion: 1, blocks: [] },
+      });
+    expect(foreignSaveError).toBeNull();
+    expect(foreignSave).toEqual([]);
+
+    const { error: invalidEnvelopeSave } = await userA.client.rpc(
+      "save_routine_document",
+      {
+        routine_id: routineA,
+        expected_revision: 2,
+        document: [],
+      },
+    );
+    expect(invalidEnvelopeSave).not.toBeNull();
+
     const { error: validReorder } = await userA.client.rpc("reorder_routines", {
       ordered_ids: [routineASecond, routineA],
     });
@@ -340,6 +441,12 @@ describeWithLocalSupabase("RLS through real Data API sessions", () => {
     expect(completionUpdateError).toBeNull();
     expect(foreignCompletionUpdate).toEqual([]);
 
+    const { error: moveCompletionToForeignRoutine } = await userA.client
+      .from("block_completions")
+      .update({ routine_id: routineB })
+      .eq("id", insertedCompletionA?.id ?? "");
+    expect(moveCompletionToForeignRoutine).not.toBeNull();
+
     const { data: foreignCompletionDelete, error: completionDeleteError } =
       await userB.client
         .from("block_completions")
@@ -422,17 +529,18 @@ describeWithLocalSupabase("RLS through real Data API sessions", () => {
     });
     expect(anonReorder).not.toBeNull();
 
+    const { error: anonSave } = await anon.rpc("save_routine_document", {
+      routine_id: routineA,
+      expected_revision: 2,
+      document: { schemaVersion: 1, blocks: [] },
+    });
+    expect(anonSave).not.toBeNull();
+
     const { error: completionAOwnUpdate } = await userA.client
       .from("block_completions")
       .update({ block_id: "check-a-renamed" })
       .eq("id", insertedCompletionA?.id ?? "");
     expect(completionAOwnUpdate).toBeNull();
-
-    const { error: completionAOwnDelete } = await userA.client
-      .from("block_completions")
-      .delete()
-      .eq("id", insertedCompletionA?.id ?? "");
-    expect(completionAOwnDelete).toBeNull();
 
     const { error: routineBUpdate } = await userB.client
       .from("routines")
@@ -468,6 +576,185 @@ describeWithLocalSupabase("RLS through real Data API sessions", () => {
     expect(finalOrder?.map(({ position }) => position)).toEqual([
       0, 1, 2, 3, 4,
     ]);
+
+    const createdIds = parallelCreates
+      .map(({ data }) => data)
+      .filter((id): id is string => typeof id === "string");
+    const { data: createdDefaults, error: createdDefaultsError } =
+      await userA.client
+        .from("routines")
+        .select("content, revision")
+        .in("id", createdIds);
+    expect(createdDefaultsError).toBeNull();
+    expect(createdDefaults).toHaveLength(3);
+    expect(createdDefaults?.every(({ content, revision }) =>
+      revision === 0 &&
+      JSON.stringify(content) ===
+        JSON.stringify({ schemaVersion: 1, blocks: [] })
+    )).toBe(true);
+
+    const draftCopyRequestId = crypto.randomUUID();
+    const draftCopyDocument = {
+      schemaVersion: 1 as const,
+      blocks: [
+        {
+          id: "draft-copy-activity",
+          type: "activity",
+          props: { custom: "preserve-exactly" },
+          children: [{ id: "draft-copy-check", type: "checkListItem" }],
+        },
+      ],
+    };
+    const copyCalls = await Promise.all(
+      Array.from({ length: 3 }, () =>
+        userA.client.rpc("create_routine_from_draft", {
+          source_routine_id: routineA,
+          document: draftCopyDocument,
+          routine_name: "Recovered draft copy",
+          routine_icon: "moon",
+          routine_recurrence_type: "daily",
+          routine_specific_date: null,
+          request_id: draftCopyRequestId,
+        })
+      ),
+    );
+    expect(copyCalls.every(({ error }) => error === null)).toBe(true);
+    const copiedRoutineId = copyCalls[0]?.data;
+    expect(copiedRoutineId).toEqual(expect.any(String));
+    expect(copyCalls.every(({ data }) => data === copiedRoutineId)).toBe(true);
+
+    const { data: copiedRoutines, error: copiedRoutineError } =
+      await userA.client
+        .from("routines")
+        .select("id, name, icon, content, revision, position")
+        .eq("name", "Recovered draft copy");
+    expect(copiedRoutineError).toBeNull();
+    expect(copiedRoutines).toEqual([
+      {
+        id: copiedRoutineId,
+        name: "Recovered draft copy",
+        icon: "moon",
+        content: draftCopyDocument,
+        revision: 0,
+        position: 5,
+      },
+    ]);
+
+    const { data: replayedCopy, error: replayedCopyError } =
+      await userA.client.rpc("create_routine_from_draft", {
+        source_routine_id: routineA,
+        document: { schemaVersion: 1, blocks: [{ id: "must-not-replace" }] },
+        routine_name: "Must not create another routine",
+        routine_icon: null,
+        routine_recurrence_type: "specific_date",
+        routine_specific_date: "2026-09-19",
+        request_id: draftCopyRequestId,
+      });
+    expect(replayedCopyError).toBeNull();
+    expect(replayedCopy).toBe(copiedRoutineId);
+
+    const routineBCopySource = await insertRoutine(
+      userB.client,
+      userB.userId,
+      "B copy source",
+      0,
+    );
+    const { data: userBCopy, error: userBCopyError } = await userB.client.rpc(
+      "create_routine_from_draft",
+      {
+        source_routine_id: routineBCopySource,
+        document: draftCopyDocument,
+        routine_name: "B recovered copy",
+        routine_icon: null,
+        routine_recurrence_type: "daily",
+        routine_specific_date: null,
+        request_id: draftCopyRequestId,
+      },
+    );
+    expect(userBCopyError).toBeNull();
+    expect(userBCopy).toEqual(expect.any(String));
+    expect(userBCopy).not.toBe(copiedRoutineId);
+
+    const inaccessibleRequestId = crypto.randomUUID();
+    const { data: foreignDraftCopy, error: foreignDraftCopyError } =
+      await userB.client.rpc("create_routine_from_draft", {
+        source_routine_id: routineA,
+        document: draftCopyDocument,
+        routine_name: "Foreign copy",
+        routine_icon: null,
+        routine_recurrence_type: "daily",
+        routine_specific_date: null,
+        request_id: inaccessibleRequestId,
+      });
+    const { data: missingDraftCopy, error: missingDraftCopyError } =
+      await userB.client.rpc("create_routine_from_draft", {
+        source_routine_id: crypto.randomUUID(),
+        document: draftCopyDocument,
+        routine_name: "Missing copy",
+        routine_icon: null,
+        routine_recurrence_type: "daily",
+        routine_specific_date: null,
+        request_id: crypto.randomUUID(),
+      });
+    expect(foreignDraftCopyError).toBeNull();
+    expect(missingDraftCopyError).toBeNull();
+    expect(foreignDraftCopy).toBeNull();
+    expect(missingDraftCopy).toBeNull();
+
+    const { data: directIdempotencyRead, error: directReadError } =
+      await userA.client.from("routine_draft_copy_requests").select("*");
+    expect(directReadError).toBeNull();
+    expect(directIdempotencyRead).toEqual([]);
+
+    const { error: directIdempotencyInsert } = await userA.client
+      .from("routine_draft_copy_requests")
+      .insert({
+        user_id: userA.userId,
+        request_id: crypto.randomUUID(),
+        routine_id: routineA,
+      });
+    expect(directIdempotencyInsert).not.toBeNull();
+
+    const { error: anonDraftCopy } = await anon.rpc(
+      "create_routine_from_draft",
+      {
+        source_routine_id: routineA,
+        document: draftCopyDocument,
+        routine_name: "Anon copy",
+        routine_icon: null,
+        routine_recurrence_type: "daily",
+        routine_specific_date: null,
+        request_id: crypto.randomUUID(),
+      },
+    );
+    expect(anonDraftCopy).not.toBeNull();
+
+    const { error: cascadeRoutineDelete } = await userA.client
+      .from("routines")
+      .delete()
+      .eq("id", routineA);
+    expect(cascadeRoutineDelete).toBeNull();
+
+    const { data: replayAfterSourceDelete, error: replayAfterDeleteError } =
+      await userA.client.rpc("create_routine_from_draft", {
+        source_routine_id: routineA,
+        document: draftCopyDocument,
+        routine_name: "Recovered draft copy",
+        routine_icon: "moon",
+        routine_recurrence_type: "daily",
+        routine_specific_date: null,
+        request_id: draftCopyRequestId,
+      });
+    expect(replayAfterDeleteError).toBeNull();
+    expect(replayAfterSourceDelete).toBe(copiedRoutineId);
+
+    const { data: cascadedCompletion, error: cascadeReadError } =
+      await userA.client
+        .from("block_completions")
+        .select("id")
+        .eq("id", insertedCompletionA?.id ?? "");
+    expect(cascadeReadError).toBeNull();
+    expect(cascadedCompletion).toEqual([]);
 
     const { error: anonCreateRoutine } = await anon.rpc("create_routine", {
       routine_name: "Anon RPC",

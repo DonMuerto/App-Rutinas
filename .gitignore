@@ -1,5 +1,5 @@
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 
@@ -8,12 +8,15 @@
 /playwright-report
 /test-results
 
-# next.js
-/.next/
-/out/
-
 # production
 /build
+/dist
+/apps/client/dist
+/.next
+
+# native generated projects and artifacts
+/apps/desktop/src-tauri/gen/
+/apps/desktop/src-tauri/target/
 
 # local environment files
 .env*

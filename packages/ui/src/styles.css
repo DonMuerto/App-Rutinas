@@ -1,0 +1,151 @@
+:root {
+  --ritmo-canvas: #f3f4f7;
+  --ritmo-surface: #ffffff;
+  --ritmo-ink: #1b2033;
+  --ritmo-ink-muted: #5b6478;
+  --ritmo-brand: #3b4ba6;
+  --ritmo-brand-strong: #263681;
+  --ritmo-border: #e2e4ec;
+  --ritmo-work: #e8963d;
+  --ritmo-rest: #4e9a82;
+  --ritmo-danger: #bd454c;
+  --ritmo-focus: #3147b7;
+  --ritmo-radius-sm: 0.45rem;
+  --ritmo-radius-md: 0.75rem;
+  --ritmo-font-body: Inter, ui-sans-serif, system-ui, sans-serif;
+  --ritmo-font-display:
+    "Space Grotesk", Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+:root[data-theme="dark"] {
+  --ritmo-canvas: #10121c;
+  --ritmo-surface: #181b29;
+  --ritmo-ink: #e7e9f2;
+  --ritmo-ink-muted: #a6aec4;
+  --ritmo-brand: #8c99ef;
+  --ritmo-brand-strong: #b1b9ff;
+  --ritmo-border: #30364d;
+  --ritmo-work: #f0a953;
+  --ritmo-rest: #69b59c;
+  --ritmo-danger: #f18587;
+  --ritmo-focus: #a7b1ff;
+}
+
+.ui-button,
+.ui-icon-button {
+  border: 0;
+  border-radius: var(--ritmo-radius-sm);
+  font: inherit;
+  font-weight: 650;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ui-button {
+  min-height: 2.75rem;
+  padding: 0.66rem 1rem;
+}
+
+.ui-button[data-compact="true"] {
+  min-height: 2.75rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.875rem;
+}
+
+.ui-button[data-variant="primary"] {
+  background: var(--ritmo-brand);
+  color: #fff;
+}
+
+.ui-button[data-variant="secondary"] {
+  border: 1px solid var(--ritmo-border);
+  background: var(--ritmo-surface);
+}
+
+.ui-button[data-variant="quiet"] {
+  background: transparent;
+  color: var(--ritmo-brand-strong);
+}
+
+.ui-button[data-variant="danger"] {
+  background: var(--ritmo-danger);
+  color: #fff;
+}
+
+.ui-icon-button {
+  display: inline-grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+}
+
+.ui-button:hover:not(:disabled),
+.ui-icon-button:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.ui-icon-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ritmo-brand) 10%, transparent);
+}
+
+.ui-button:disabled,
+.ui-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ui-button:focus-visible,
+.ui-icon-button:focus-visible {
+  outline: 2px solid var(--ritmo-focus);
+  outline-offset: 2px;
+}
+
+.ui-dialog-layer {
+  position: fixed;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  inset: 0;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.ui-dialog-backdrop {
+  position: absolute;
+  border: 0;
+  background: rgb(8 10 18 / 58%);
+  inset: 0;
+}
+
+.ui-dialog-panel {
+  position: relative;
+  width: min(100%, 32rem);
+  max-height: min(42rem, calc(100dvh - 2rem));
+  overflow: auto;
+  border: 1px solid var(--ritmo-border);
+  border-radius: var(--ritmo-radius-md);
+  background: var(--ritmo-surface);
+  color: var(--ritmo-ink);
+  padding: clamp(1.25rem, 5vw, 2rem);
+  box-shadow: 0 1.5rem 4rem rgb(8 10 18 / 25%);
+}
+
+.ui-dialog-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

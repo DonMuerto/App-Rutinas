@@ -1,0 +1,13 @@
+{
+  "name": "@ritmo/platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./fakes": "./src/fakes.ts"
+  },
+  "dependencies": {
+    "@ritmo/core": "workspace:*"
+  }
+}

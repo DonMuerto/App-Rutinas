@@ -1,0 +1,21 @@
+{
+  "name": "@ritmo/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cap": "cap",
+    "sync": "cap sync"
+  },
+  "dependencies": {
+    "@aparajita/capacitor-secure-storage": "8.0.0",
+    "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2",
+    "@ritmo/platform-capacitor": "workspace:*"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2"
+  }
+}

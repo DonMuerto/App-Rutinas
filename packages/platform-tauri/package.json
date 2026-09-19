@@ -1,0 +1,15 @@
+{
+  "name": "@ritmo/platform-tauri",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ritmo/platform": "workspace:*",
+    "@ritmo/platform-web": "workspace:*",
+    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-opener": "2.5.5"
+  }
+}
